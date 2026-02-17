@@ -7,32 +7,42 @@ export default function Homepage() {
   return (
     <>
       <main>
-        <header id="hero" className="px-8 sm:px-12 lg:px-20 py-6">
-          <div className="flex flex-col gap-4">
-            <h1 className="text-4xl font-bold">
-              Bingung Olahraga? <br /> <span>Mabarin aja!</span>
+        <header
+          id="hero"
+          className="relative flex items-center px-8 sm:px-12 lg:px-20 py-6 min-h-[calc(100vh-4rem)] bg-cover bg-center bg-no-repeat overflow-hidden group"
+          style={{
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?q=80&w=2607&auto=format&fit=crop')",
+          }}
+        >
+          {/* Dark Overlay */}
+          <div className="absolute inset-0 bg-black/60 z-0"></div>
+
+          <div className="flex flex-col gap-6 w-full justify-center relative z-10 max-w-[1440px] mx-auto">
+            <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight">
+              Bingung Olahraga? <br />{" "}
+              <span className="text-blue-400">Mabarin aja!</span>
             </h1>
-            <p className="text-lg">
+            <p className="text-lg text-gray-200 leading-relaxed">
               Cari eventnya, bayarnya mudah, langsung mabar tanpa ribet!
               <br />
               Yuk langsung join di Mabarin!
             </p>
-            <div className="w-fit px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-full transition-all duration-200 shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40">
-              <button className="text-white text-sm font-semibold">
+            <div className="w-fit">
+              <button className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-full transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transform hover:-translate-y-1">
                 Start Exploring
               </button>
             </div>
           </div>
         </header>
-        <section id="upcoming-event" className="px-8 sm:px-12 lg:px-20 py-6">
+        <section id="upcoming-event" className="px-8 sm:px-12 lg:px-0 py-6 max-w-[1440px] mx-auto">
           <UpcomingEvent />
         </section>
-        <section id="how-it-works" className="px-8 sm:px-12 lg:px-20 py-6">
+        <section id="how-it-works" className="px-8 sm:px-12 lg:px-0 py-6 max-w-[1440px] mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900">How it Works</h2>
+            <h2 className="text-3xl font-bold text-gray-900">Cara Mabarnya Gimana?</h2>
             <p className="text-gray-500 mt-2 text-lg">
-              Tiga langkah mudah untuk mulai berolahraga bersama komunitas
-              favoritmu.
+              Tiga langkah mudah untuk mulai mabar bersama Mabarin!
             </p>
           </div>
 
@@ -118,8 +128,9 @@ export default function Homepage() {
             </div>
           </div>
         </section>
-        <footer className="bg-gray-900 text-white mt-12 py-12 px-8 sm:px-12 lg:px-20">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+      </main>
+      <footer className="bg-gray-900 text-white">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 py-12 px-8 sm:px-12 lg:px-0 lg:max-w-[1440px] mx-auto">
             <div className="text-2xl font-bold">Mabarin!</div>
 
             <div className="text-sm text-gray-400 text-center md:text-left order-3 md:order-2">
@@ -180,7 +191,6 @@ export default function Homepage() {
             </div>
           </div>
         </footer>
-      </main>
     </>
   );
 }
