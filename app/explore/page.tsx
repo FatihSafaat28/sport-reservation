@@ -1,9 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import EventCardItems, {
-  SportActivity,
-} from "../components/event-card-items";
+import EventCardItems from "../components/event-card-items";
+import { SportActivity } from "@/lib/interface/sportactivity";
 import { API_BASE_URL } from "@/lib/config";
 
 export default function ExplorePage() {

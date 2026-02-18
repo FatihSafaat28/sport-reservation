@@ -1,35 +1,6 @@
 import React from "react";
 import Link from "next/link";
-
-export interface SportActivity {
-  id: number;
-  title: string;
-  description: string;
-  activity_date: string;
-  start_time: string;
-  end_time: string;
-  price: number;
-  address: string;
-  city: {
-    city_name: string;
-    province: {
-      province_name: string;
-    };
-  };
-  organizer: {
-    name: string;
-    email: string;
-  };
-  sport_category?: {
-    name: string;
-  };
-  participants: {
-    user : {
-      name : string;
-    }
-  }[]
-  slot: number;
-}
+import { SportActivity } from "@/lib/interface/sportactivity"
 
 interface EventCardItemsProps {
   event: SportActivity;
@@ -37,7 +8,7 @@ interface EventCardItemsProps {
 
 export default function EventCardItems({ event }: EventCardItemsProps) {
   return (
-    <Link href={`/activity/${event.id}`} className="group">
+    <Link href={`/explore/${event.id}`} className="group">
       <div className="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full flex flex-col justify-between">
         <div className="flex flex-col gap-3">
           <div className="flex justify-between items-start">

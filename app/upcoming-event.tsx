@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/config";
 // import Image from 'next/image'; // Uncomment if API provides images
 
-import EventCardItems, { SportActivity } from "./components/event-card-items";
+import EventCardItems from "./components/event-card-items";
+import { SportActivity } from "@/lib/interface/sportactivity";
 
 export default function UpcomingEvent() {
   const [events, setEvents] = useState<SportActivity[]>([]);
