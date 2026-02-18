@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/config";
 // import Image from 'next/image'; // Uncomment if API provides images
 
-import EventCardItems, { SportActivity } from "./event-card-items";
+import EventCardItems, { SportActivity } from "./components/event-card-items";
 
 export default function UpcomingEvent() {
   const [events, setEvents] = useState<SportActivity[]>([]);
@@ -13,12 +13,11 @@ export default function UpcomingEvent() {
   useEffect(() => {
     const getDataEvent = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/sport-activities`);
+        const response = await fetch(`${API_BASE_URL}/sport-activities?per_page=999`);
         if (!response.ok) {
           throw new Error("Failed to fetch events");
         }
         const result = await response.json();
-        console.log(result.result.data);
         const activities: SportActivity[] = result.result.data;
         
         const now = new Date();

@@ -23,7 +23,11 @@ export interface SportActivity {
   sport_category?: {
     name: string;
   };
-  participants_count?: number;
+  participants: {
+    user : {
+      name : string;
+    }
+  }[]
   slot: number;
 }
 
@@ -106,7 +110,7 @@ export default function EventCardItems({ event }: EventCardItemsProps) {
                   />
                 </svg>
                 <span>
-                  {event.participants_count || 0} / {event.slot} Participants
+                  {event.participants.length || 0} / {event.slot} Participants
                 </span>
               </p>
             </div>

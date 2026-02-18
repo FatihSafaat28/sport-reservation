@@ -62,8 +62,8 @@ export default function Navbar() {
 
   return (
     <nav className="bg-gray-900 border-b border-gray-800 sticky top-0 z-50 backdrop-blur-md bg-opacity-95">
-      <div className="mx-auto px-8 sm:px-12 lg:px-0 lg:max-w-[1440px]">
-        <div className="flex items-center justify-between h-16 relative">
+      <div className="mx-auto px-8 md:px-8 xl:max-w-[1440px]">
+        <div className="flex items-center justify-between h-16">
           {/* Logo Section */}
           <div className="shrink-0">
             <Link
@@ -126,7 +126,7 @@ export default function Navbar() {
           <div
             className={`${
               isOpen ? "flex" : "hidden"
-            } absolute top-16 left-0 right-0 bg-gray-900 border-b border-gray-800 p-4 flex-col gap-4 shadow-xl md:flex md:static md:flex-row md:items-center md:justify-between md:bg-transparent md:border-none md:shadow-none md:p-0 md:w-full`}
+            } text-center absolute top-16 left-0 right-0 bg-gray-900 border-b border-gray-800 p-4 flex-col gap-4 shadow-xl md:flex md:static md:flex-row md:items-center md:justify-between md:bg-transparent md:border-none md:shadow-none md:p-0 md:w-full`}
             id="navbar-menu"
           >
             {/* Desktop Center Spacer (Invisible) to help center the menu */}
