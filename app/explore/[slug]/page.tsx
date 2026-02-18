@@ -1,8 +1,9 @@
 import { API_BASE_URL } from "@/lib/config";
 import { SportActivity } from "@/lib/interface/sportactivity";
 import Link from "next/link";
+import ParticipantsList from "./_components/ParticipantsList";
+import BookingDialog from "./_components/BookingDialog";
 
-import React from "react";
 
 export default async function ActivityDetailPage({
   params,
@@ -14,9 +15,7 @@ export default async function ActivityDetailPage({
   if (!response.ok) throw new Error("Failed to fetch events");
   const result = await response.json();
   const activity: SportActivity = result.result
-  console.log(activity)
 
-  //fetch event by id API https://sport-reservation-api-bootcamp.do.dibimbing.id/api/v1/sport-activities/[id]
 
   // Format currency
   const formatPrice = (price: number) => {
@@ -109,9 +108,10 @@ export default async function ActivityDetailPage({
                       {formatPrice(activity.price)}
                     </span>
                   </div>
-                   <button className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-blue-200">
-                    Book Now
-                  </button>
+                   <BookingDialog 
+                     activity={activity} 
+                     className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-blue-200"
+                   />
                </div>
             </div>
 
@@ -161,36 +161,12 @@ export default async function ActivityDetailPage({
             </section>
 
             {/* Participants */}
-            <section className="bg-white rounded-2xl p-6 md:p-8 shadow-sm ring-1 ring-gray-100">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-gray-900">Participants</h2>
-                <span className="px-3 py-1 bg-gray-100 text-gray-600 text-sm font-medium rounded-full">
-                  {activity.participants?.length || 0} / {activity.slot} Joined
-                </span>
-              </div>
-              
-              {activity.participants?.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {activity.participants.map((p, idx) => (
-                    <div key={idx} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold uppercase">
-                        {p.user.name.charAt(0)}
-                      </div>
-                      <span className="font-medium text-gray-700">{p.user.name}</span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">
-                  Be the first to join this event!
-                </div>
-              )}
-            </section>
+            <ParticipantsList participants={activity.participants || []} totalSlots={activity.slot} />
           </div>
 
           {/* Sidebar - Desktop Price Card */}
           <div className="hidden lg:block">
-            <div className="sticky top-[100px] bg-white rounded-2xl p-6 shadow-lg ring-1 ring-gray-100">
+            <div className="sticky top-[168px] bg-white rounded-2xl p-6 shadow-lg ring-1 ring-gray-100">
               <div className="space-y-4">
                 <div className="flex justify-between items-baseline">
                   <span className="text-gray-500 font-medium">Price</span>
@@ -210,9 +186,12 @@ export default async function ActivityDetailPage({
                     </div>
                 </div>
 
-                <button className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 transform active:scale-[0.98]">
-                  Book Now
-                </button>
+
+
+                <BookingDialog 
+                  activity={activity}
+                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 transform active:scale-[0.98]"
+                />
                 
                 <p className="text-xs text-center text-gray-400 mt-2">
                   Secure transaction guaranteed
@@ -230,9 +209,10 @@ export default async function ActivityDetailPage({
              <p className="text-xs text-gray-500 uppercase font-semibold">Price</p>
              <p className="text-xl font-bold text-blue-600">{formatPrice(activity.price)}</p>
           </div>
-          <button className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-200">
-            Book Now
-          </button>
+          <BookingDialog 
+            activity={activity}
+            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-200"
+          />
         </div>
       </div>
     </main>
