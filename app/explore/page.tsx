@@ -115,7 +115,7 @@ export default function ExplorePage() {
   return (
     <main className="min-h-screen bg-gray-50 pb-20">
       {/* Filter Section */}
-      <section className="bg-white border-b border-gray-200 sticky top-[72px] z-10 shadow-sm">
+      <section className="bg-white border-b border-gray-200 sticky top-[65px] z-10 shadow-sm">
         <div className="max-w-[1440px] mx-auto px-8 md:px-8 py-2 md:mb-2">
           <div className="flex md:hidden justify-between items-center">
             <span className="font-semibold text-gray-900">Filters</span>
