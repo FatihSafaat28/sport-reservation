@@ -6,6 +6,7 @@ import { API_BASE_URL } from "@/lib/config";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
 
@@ -148,20 +149,52 @@ export default function Navbar() {
             {/* Desktop/Mobile Auth Buttons */}
             <div className={`${isOpen ? "flex" : "hidden"} md:flex flex-col md:flex-row md:items-center gap-3 pt-4 border-t border-gray-800 md:pt-0 md:border-none`}>
               {isLoggedIn ? (
-                <>
-                  <span className="text-gray-300 text-sm px-3 md:px-0">
-                    Hi, <span className="font-semibold text-white">{userName}</span>
-                  </span>
+                <div className="relative">
                   <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsOpen(false);
-                    }}
-                    className="px-5 py-2 w-full md:w-auto bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-full transition-all duration-200 shadow-lg shadow-red-500/20 hover:shadow-red-500/40"
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors focus:outline-none"
                   >
-                    Logout
+                    <span className="text-sm">Hi, <span className="font-semibold text-white">{userName}</span></span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
                   </button>
-                </>
+
+                  {isDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700">
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          setIsOpen(false);
+                        }}
+                      >
+                        Profile
+                      </Link>
+                      <Link
+                        href="/profile/transaction"
+                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                        onClick={() => {
+                          setIsDropdownOpen(false);
+                          setIsOpen(false);
+                        }}
+                      >
+                        Transaction
+                      </Link>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setIsDropdownOpen(false);
+                          setIsOpen(false);
+                        }}
+                        className="block w-full text-center px-4 py-2 text-sm text-red-500 hover:bg-gray-700 hover:text-red-400"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
               ) : (
                 <>
                   <Link
