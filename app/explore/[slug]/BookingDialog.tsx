@@ -52,7 +52,7 @@ export default function BookingDialog({ activity, className }: BookingDialogProp
     const token = sessionStorage.getItem('token');
     if (!token) {
       alert("Please login first to book an activity.");
-      router.push('/login');
+      router.push('/authentication/login');
       return;
     }
     setIsOpen(true);

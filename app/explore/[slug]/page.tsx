@@ -1,8 +1,8 @@
 import { API_BASE_URL } from "@/lib/config";
 import { SportActivity } from "@/lib/interface/sportactivity";
 import Link from "next/link";
-import ParticipantsList from "./_components/ParticipantsList";
-import BookingDialog from "./_components/BookingDialog";
+import ParticipantsList from "./ParticipantsList";
+import BookingDialog from "./BookingDialog";
 
 
 export default async function ActivityDetailPage({
@@ -15,6 +15,13 @@ export default async function ActivityDetailPage({
   if (!response.ok) throw new Error("Failed to fetch events");
   const result = await response.json();
   const activity: SportActivity = result.result
+
+  // Check if event is expired
+  const eventEnd = new Date(`${activity.activity_date}T${activity.end_time}`);
+  const isExpired = eventEnd < new Date();
+
+  // Check if event is fully booked
+  const isFullyBooked = (activity.participants?.length || 0) >= activity.slot;
 
 
   // Format currency
@@ -108,10 +115,20 @@ export default async function ActivityDetailPage({
                       {formatPrice(activity.price)}
                     </span>
                   </div>
-                   <BookingDialog 
-                     activity={activity} 
-                     className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-blue-200"
-                   />
+                   {isExpired ? (
+                     <button disabled className="w-full py-3 bg-gray-400 text-white font-semibold rounded-xl cursor-not-allowed">
+                       Event Ended
+                     </button>
+                   ) : isFullyBooked ? (
+                     <button disabled className="w-full py-3 bg-orange-400 text-white font-semibold rounded-xl cursor-not-allowed">
+                       Fully Booked
+                     </button>
+                   ) : (
+                     <BookingDialog 
+                       activity={activity} 
+                       className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-blue-200"
+                     />
+                   )}
                </div>
             </div>
 
@@ -188,10 +205,20 @@ export default async function ActivityDetailPage({
 
 
 
-                <BookingDialog 
-                  activity={activity}
-                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 transform active:scale-[0.98]"
-                />
+                {isExpired ? (
+                  <button disabled className="w-full py-3.5 bg-gray-400 text-white font-semibold rounded-xl cursor-not-allowed">
+                    Event Ended
+                  </button>
+                ) : isFullyBooked ? (
+                  <button disabled className="w-full py-3.5 bg-orange-400 text-white font-semibold rounded-xl cursor-not-allowed">
+                    Fully Booked
+                  </button>
+                ) : (
+                  <BookingDialog 
+                    activity={activity}
+                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 transform active:scale-[0.98]"
+                  />
+                )}
                 
                 <p className="text-xs text-center text-gray-400 mt-2">
                   Secure transaction guaranteed
@@ -209,10 +236,20 @@ export default async function ActivityDetailPage({
              <p className="text-xs text-gray-500 uppercase font-semibold">Price</p>
              <p className="text-xl font-bold text-blue-600">{formatPrice(activity.price)}</p>
           </div>
-          <BookingDialog 
-            activity={activity}
-            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-200"
-          />
+          {isExpired ? (
+            <button disabled className="px-8 py-3 bg-gray-400 text-white font-semibold rounded-xl cursor-not-allowed">
+              Event Ended
+            </button>
+          ) : isFullyBooked ? (
+            <button disabled className="px-8 py-3 bg-orange-400 text-white font-semibold rounded-xl cursor-not-allowed">
+              Fully Booked
+            </button>
+          ) : (
+            <BookingDialog 
+              activity={activity}
+              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-200"
+            />
+          )}
         </div>
       </div>
     </main>
