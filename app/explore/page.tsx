@@ -1,32 +1,19 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import EventCardItems from "../components/event-card-items";
 import { SportActivity } from "@/lib/interface/sportactivity";
 import { API_BASE_URL } from "@/lib/config";
-
-// Interfaces for API responses
-interface SportCategory {
-  id: number;
-  name: string;
-}
-
-interface Province {
-  province_id: number;
-  province_name: string;
-}
-
-interface City {
-  city_id: number;
-  city_name: string;
-}
+import { SportCategory } from "@/lib/interface/sportcategory";
+import { Province } from "@/lib/interface/province";
+import { City } from "@/lib/interface/city";
 
 export default function ExplorePage() {
   // Events data & loading
   const [events, setEvents] = useState<SportActivity[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Pagination (server-side)
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalEvents, setTotalEvents] = useState(0);
@@ -314,9 +301,9 @@ export default function ExplorePage() {
               <button
                 onClick={resetFilters}
                 disabled={!hasActiveFilters}
-                className={`w-full px-4 py-2 font-medium rounded-lg transition-colors text-sm h-[38px] ${
+                className={`w-full px-4 py-2 font-medium text-white rounded-lg transition-colors text-sm h-[38px] ${
                   hasActiveFilters
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    ? "bg-blue-600 hover:bg-blue-700"
                     : "bg-blue-400 text-blue-500 cursor-not-allowed"
                 }`}
               >
@@ -324,7 +311,6 @@ export default function ExplorePage() {
               </button>
             </div>
           </div>
-
           {/* Search Bar */}
           <div className="relative mt-3">
             <svg
@@ -360,7 +346,6 @@ export default function ExplorePage() {
               </button>
             )}
           </div>
-
           {/* Category Badges */}
           {categories.length > 0 && (
             <div
@@ -383,7 +368,6 @@ export default function ExplorePage() {
               ))}
             </div>
           )}
-
         </div>
       </section>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, use } from "react";
+import { useEffect, useState, use } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { useRouter } from "next/navigation";
 import { SportActivity } from "@/lib/interface/sportactivity";
@@ -91,7 +91,6 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
             }
         });
         const result = await response.json();
-        console.log(result);
         if (!result.error) {
             const data = result.result
             if (Array.isArray(data)) {
@@ -128,7 +127,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
       });
 
       const result = await response.json();
-      if (result.success) {
+      if (!result.error) {
         alert("Proof of payment updated successfully!");
         fetchTransactionDetail(); // Refresh data
         setProofUrl("");
@@ -144,7 +143,87 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center pt-20">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl mx-auto space-y-6">
+
+          {/* Back Button Skeleton */}
+          <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+
+          {/* SECTION 1: Transaction Detail Skeleton */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="flex justify-between items-start">
+              <div className="space-y-2">
+                <div className="h-7 w-48 bg-gray-200 rounded-md animate-pulse" />
+                <div className="h-3.5 w-56 bg-gray-100 rounded animate-pulse" />
+              </div>
+              <div className="h-7 w-20 bg-gray-200 rounded-full animate-pulse" />
+            </div>
+            <div className="mt-4 border-t border-gray-200 pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i}>
+                  <div className="h-3.5 w-28 bg-gray-200 rounded animate-pulse" />
+                  <div className="mt-1.5 h-5 w-40 bg-gray-100 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* SECTION 2: Activity Details Skeleton */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="h-5 w-36 bg-gray-200 rounded-md animate-pulse mb-4" />
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="flex-1 space-y-3">
+                {/* Category Badge + Title */}
+                <div>
+                  <div className="h-6 w-16 bg-blue-100 rounded-md animate-pulse mb-2" />
+                  <div className="h-6 w-64 bg-gray-200 rounded animate-pulse" />
+                </div>
+
+                {/* Description + Details split */}
+                <div className="flex flex-col md:flex-row gap-6">
+                  {/* Left: Description */}
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-3.5 w-full bg-gray-100 rounded animate-pulse" />
+                    <div className="h-3.5 w-full bg-gray-100 rounded animate-pulse" />
+                    <div className="h-3.5 w-3/4 bg-gray-100 rounded animate-pulse" />
+                  </div>
+
+                  {/* Right: Date, Location, Organizer */}
+                  <div className="w-full md:w-1/3 flex flex-col gap-4 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex gap-3">
+                        <div className="w-5 h-5 bg-gray-200 rounded animate-pulse shrink-0" />
+                        <div className="space-y-1.5 flex-1">
+                          <div className="h-4 w-20 bg-gray-200 rounded animate-pulse" />
+                          <div className="h-3.5 w-full bg-gray-100 rounded animate-pulse" />
+                          <div className="h-3 w-2/3 bg-gray-100 rounded animate-pulse" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION 3: Payment Proof Skeleton */}
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <div className="h-5 w-32 bg-gray-200 rounded-md animate-pulse mb-4" />
+            <div className="space-y-4">
+              <div className="h-3.5 w-72 bg-gray-100 rounded animate-pulse" />
+              <div>
+                <div className="h-3.5 w-20 bg-gray-200 rounded animate-pulse mb-1" />
+                <div className="h-9 w-full bg-gray-100 rounded-md animate-pulse" />
+              </div>
+              <div className="h-9 w-32 bg-gray-200 rounded-md animate-pulse" />
+            </div>
+          </div>
+
+        </div>
+      </div>
+    );
   }
 
   if (!transaction) {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { useRouter } from "next/navigation";
 import { TransactionDetail } from "@/lib/interface/transactiondetail";
@@ -9,7 +9,6 @@ export default function TransactionPage() {
   const router = useRouter();
   const [transactions, setTransactions] = useState<TransactionDetail[]>([]);
   const [loading, setLoading] = useState(true);
-  const [proofUrlInputs, setProofUrlInputs] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
     fetchTransactions();
@@ -34,7 +33,6 @@ export default function TransactionPage() {
       }
 
       const result = await response.json();
-      console.log(result.result.data)
       if (!result.result.error) {
         setTransactions(result.result.data);
       }
@@ -45,54 +43,52 @@ export default function TransactionPage() {
     }
   };
 
-  const handleProofUrlChange = (transactionId: string, value: string) => {
-    setProofUrlInputs(prev => ({
-      ...prev,
-      [transactionId]: value
-    }));
-  };
-
-  const handleUploadProof = async (transactionId: string) => {
-    const url = proofUrlInputs[transactionId];
-    if (!url) {
-      alert("Please enter a URL first");
-      return;
-    }
-
-    const token = sessionStorage.getItem("token");
-    try {
-      const response = await fetch(`${API_BASE_URL}/transaction/update-proof-payment/${transactionId}`, {
-        method: "POST", // API for update usually POST or PUT
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          proof_payment_url: url
-        }),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        alert("Proof of payment updated successfully!");
-        fetchTransactions(); // Refresh list to see updated status or url
-        setProofUrlInputs(prev => {
-            const newState = {...prev};
-            delete newState[transactionId];
-            return newState;
-        });
-      } else {
-        alert(result.message || "Failed to update proof of payment");
-      }
-    } catch (error) {
-      console.error("Error updating proof of payment:", error);
-      alert("An error occurred");
-    }
-  };
 
 
   if (loading) {
-     return <div className="min-h-screen flex items-center justify-center pt-20">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          {/* Header Skeleton */}
+          <div className="h-8 w-52 bg-gray-200 rounded-md animate-pulse mb-8" />
+
+          {/* Transaction Card Skeletons */}
+          <div className="grid gap-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white rounded-2xl p-6 border border-gray-200">
+                {/* Top Row: Invoice + Status */}
+                <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-4">
+                  <div className="space-y-2">
+                    <div className="h-5 w-48 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-3.5 w-36 bg-gray-100 rounded animate-pulse" />
+                    <div className="h-3.5 w-44 bg-gray-100 rounded animate-pulse" />
+                  </div>
+                  <div className="h-7 w-20 bg-gray-200 rounded-full animate-pulse" />
+                </div>
+
+                {/* Activity Snapshot Skeleton */}
+                <div className="mb-4 p-3 bg-gray-50 rounded-md border border-gray-100">
+                  <div className="h-5 w-56 bg-gray-200 rounded animate-pulse" />
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                    <div className="h-4 w-28 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-4 w-32 bg-gray-200 rounded animate-pulse" />
+                  </div>
+                </div>
+
+                {/* Bottom Row: Price + Button */}
+                <div className="flex justify-between items-center border-t border-gray-100 pt-4">
+                  <div className="flex flex-col gap-1">
+                    <div className="h-3 w-12 bg-gray-200 rounded animate-pulse" />
+                    <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
+                  </div>
+                  <div className="h-9 w-28 bg-gray-200 rounded-md animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
