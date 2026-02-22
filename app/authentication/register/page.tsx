@@ -3,6 +3,7 @@ import React from "react";
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function Register() {
   const router = useRouter();
@@ -65,7 +66,7 @@ export default function Register() {
           Create an Account
         </h1>
         <p className="mt-2 text-sm text-gray-600">
-          Sign up to start booking your sports venues
+          Sign up to start booking your mabar events
         </p>
       </div>
 
@@ -147,7 +148,7 @@ export default function Register() {
         </div>
 
         <button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors focus:ring-4 focus:ring-blue-500/20 mt-2"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors focus:ring-4 focus:ring-blue-500/20 mt-2 cursor-pointer"
           type="submit"
         >
           Register
@@ -156,9 +157,9 @@ export default function Register() {
 
       <div className="text-center text-sm text-gray-600">
         Already have an account?{" "}
-        <a href="/authentication/login" className="font-semibold text-blue-600 hover:text-blue-500">
+        <Link href="/authentication/login" className="font-semibold text-blue-600 hover:text-blue-500">
           Sign in
-        </a>
+        </Link>
       </div>
     </div>
   );

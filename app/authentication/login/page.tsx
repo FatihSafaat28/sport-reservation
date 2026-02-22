@@ -3,6 +3,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/config";
+import Link from "next/link";
 
 export default function Login() {
   const router = useRouter();
@@ -58,7 +59,7 @@ export default function Login() {
           Welcome Back
         </h1>
         <p className="mt-2 text-sm text-gray-600">
-          Enter your credentials to access your account
+          Enter your email and password to login.
         </p>
       </div>
 
@@ -113,7 +114,7 @@ export default function Login() {
         </div>
 
         <button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors focus:ring-4 focus:ring-blue-500/20"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors focus:ring-4 focus:ring-blue-500/20 cursor-pointer"
           type="submit"
         >
           Sign In
@@ -122,9 +123,9 @@ export default function Login() {
 
       <div className="text-center text-sm text-gray-600">
         Don't have an account?{" "}
-        <a href="/authentication/register" className="font-semibold text-blue-600 hover:text-blue-500">
+        <Link href="/authentication/register" className="font-semibold text-blue-600 hover:text-blue-500">
           Sign up
-        </a>
+        </Link>
       </div>
     </div>
   );

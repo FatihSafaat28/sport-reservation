@@ -110,7 +110,7 @@ export default async function ActivityDetailPage({
                {/* Booking Section */}
                <div className="hidden md:block lg:hidden mb-6 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
                   <div className="flex justify-between items-center mb-4">
-                    <span className="text-gray-500 font-medium">Price per person</span>
+                    <span className="text-gray-500 font-medium">Price</span>
                     <span className="text-2xl font-bold text-blue-600">
                       {formatPrice(activity.price)}
                     </span>
@@ -126,7 +126,7 @@ export default async function ActivityDetailPage({
                    ) : (
                      <BookingDialog 
                        activity={activity} 
-                       className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-blue-200"
+                       className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-lg shadow-blue-200 cursor-pointer"
                      />
                    )}
                </div>
@@ -216,7 +216,7 @@ export default async function ActivityDetailPage({
                 ) : (
                   <BookingDialog 
                     activity={activity}
-                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 transform active:scale-[0.98]"
+                    className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-200 hover:shadow-blue-300 transform active:scale-[0.98] cursor-pointer"
                   />
                 )}
                 
@@ -229,29 +229,29 @@ export default async function ActivityDetailPage({
         </div>
       </div>
 
-      {/* Mobile Sticky Footer Price */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 safe-area-bottom">
-        <div className="flex items-center gap-4">
-          <div className="flex-1">
-             <p className="text-xs text-gray-500 uppercase font-semibold">Price</p>
-             <p className="text-xl font-bold text-blue-600">{formatPrice(activity.price)}</p>
+          {/* Mobile Sticky Footer Price */}
+          <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 safe-area-bottom">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <p className="text-xs text-gray-500 uppercase font-semibold">Price</p>
+                <p className="text-xl font-bold text-blue-600">{formatPrice(activity.price)}</p>
+              </div>
+              {isExpired ? (
+                <button disabled className="px-8 py-3 bg-gray-400 text-white font-semibold rounded-xl cursor-not-allowed">
+                  Event Ended
+                </button>
+              ) : isFullyBooked ? (
+                <button disabled className="px-8 py-3 bg-orange-400 text-white font-semibold rounded-xl cursor-not-allowed">
+                  Fully Booked
+                </button>
+              ) : (
+                <BookingDialog 
+                  activity={activity}
+                  className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-200 cursor-pointer"
+                />
+              )}
+            </div>
           </div>
-          {isExpired ? (
-            <button disabled className="px-8 py-3 bg-gray-400 text-white font-semibold rounded-xl cursor-not-allowed">
-              Event Ended
-            </button>
-          ) : isFullyBooked ? (
-            <button disabled className="px-8 py-3 bg-orange-400 text-white font-semibold rounded-xl cursor-not-allowed">
-              Fully Booked
-            </button>
-          ) : (
-            <BookingDialog 
-              activity={activity}
-              className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg shadow-blue-200"
-            />
-          )}
-        </div>
-      </div>
     </main>
   );
 }

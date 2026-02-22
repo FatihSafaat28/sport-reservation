@@ -44,7 +44,7 @@ export default function Navbar() {
     } catch (error) {
       console.error("Error during logout:", error);
     } finally {
-      // Clear sessionStorage regardless of API result
+      // Clear sessionStorage
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("email");
       sessionStorage.removeItem("name");
@@ -86,7 +86,7 @@ export default function Navbar() {
               aria-expanded={isOpen}
             >
               <span className="sr-only">Open main menu</span>
-              {/* Icon switching logic */}
+              {/* Icon switching */}
               <div className="relative w-6 h-6">
                 {isOpen ? (
                   <svg

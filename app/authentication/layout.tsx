@@ -10,7 +10,8 @@ export default function AuthenticationLayout({
     <div className="flex h-[calc(100vh-65px)] w-full overflow-hidden">
       {/* Left side - Image */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-gray-900 items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-black/20 z-10" /> {/* Overlay for better text contrast if needed */}
+        {/* Overlay for better text contrast if needed */}
+        <div className="absolute inset-0 bg-black/50 z-10" />
         <Image
           src="https://images.unsplash.com/photo-1565992441121-4367c2967103?q=80&w=627&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Sport and Fitness"
