@@ -34,7 +34,32 @@ export default function TransactionPage() {
 
       const result = await response.json();
       if (!result.result.error) {
-        setTransactions(result.result.data);
+        const data: TransactionDetail[] = result.result.data;
+
+        // Auto-cancel expired pending transactions without proof
+        const expiredPending = data.filter(
+          (t) =>
+            t.status === "pending" &&
+            !t.proof_payment_url &&
+            t.expired_date &&
+            new Date(t.expired_date) < new Date()
+        );
+
+        if (expiredPending.length > 0) {
+          await Promise.all(
+            expiredPending.map((t) =>
+              fetch(`${API_BASE_URL}/transaction/cancel/${t.id}`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+              })
+            )
+          );
+          // Re-fetch after cancelling
+          setLoading(true);
+          return fetchTransactions();
+        }
+
+        setTransactions(data);
       }
     } catch (error) {
       console.error("Error fetching transactions:", error);
@@ -44,6 +69,38 @@ export default function TransactionPage() {
   };
 
 
+  // Derive display status and expires label
+  const getDisplayInfo = (t: TransactionDetail) => {
+    if (t.status === "pending" && t.proof_payment_url) {
+      return {
+        displayStatus: "PROOF CHECKING",
+        statusClass: "bg-blue-100 text-blue-800",
+        expiresLabel: "Proof under Checking",
+      };
+    }
+    if (t.status === "success" || t.status === "paid") {
+      return {
+        displayStatus: t.status.toUpperCase(),
+        statusClass: "bg-green-100 text-green-800",
+        expiresLabel: null,
+      };
+    }
+    if (t.status === "cancelled") {
+      return {
+        displayStatus: "CANCELLED",
+        statusClass: "bg-red-100 text-red-800",
+        expiresLabel: null,
+      };
+    }
+    // Default: pending without proof
+    return {
+      displayStatus: "PENDING",
+      statusClass: "bg-yellow-100 text-yellow-800",
+      expiresLabel: t.expired_date
+        ? new Date(t.expired_date).toLocaleString()
+        : null,
+    };
+  };
 
   if (loading) {
     return (
@@ -109,20 +166,28 @@ export default function TransactionPage() {
                     <h3 className="text-lg font-bold text-gray-900">
                       Invoice: {transaction.invoice_id}
                     </h3>
-                    <div className="text-sm text-gray-500 space-y-0.5">
-                        <p>Order Date: {new Date(transaction.order_date).toLocaleDateString()}</p>
-                        {transaction.expired_date && (
-                            <p className="text-red-500">Expires: {new Date(transaction.expired_date).toLocaleString()}</p>
-                        )}
-                    </div>
+                    {(() => {
+                      const info = getDisplayInfo(transaction);
+                      return (
+                        <>
+                          <div className="text-sm text-gray-500 space-y-0.5">
+                            <p>Order Date: {new Date(transaction.order_date).toLocaleDateString()}</p>
+                            {info.expiresLabel && (
+                              <p className="text-red-500">Expires: {info.expiresLabel}</p>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
-                  <div className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${
-                    transaction.status === 'success' || transaction.status === 'paid' ? 'bg-green-100 text-green-800' :
-                    transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-gray-100 text-gray-800'
-                  }`}>
-                    {transaction.status.toUpperCase()}
-                  </div>
+                  {(() => {
+                    const info = getDisplayInfo(transaction);
+                    return (
+                      <div className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${info.statusClass}`}>
+                        {info.displayStatus}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Activity Snapshot */}

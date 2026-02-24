@@ -14,7 +14,8 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
   const [activity, setActivity] = useState<SportActivity | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
   const [loading, setLoading] = useState(true);
-  const [proofUrl, setProofUrl] = useState("");
+  const [proofFile, setProofFile] = useState<File | null>(null);
+  const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
@@ -104,15 +105,56 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
     }
   }
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    if (selected) {
+      // Validate image type
+      if (!selected.type.startsWith("image/")) {
+        alert("Only image files are allowed (JPG, PNG, etc.)");
+        e.target.value = "";
+        return;
+      }
+      // Validate max size 512KB
+      if (selected.size > 512 * 1024) {
+        alert(`File size (${(selected.size / 1024).toFixed(0)} KB) exceeds the 512 KB limit. Please choose a smaller image.`);
+        e.target.value = "";
+        return;
+      }
+      setProofFile(selected);
+      setProofPreview(URL.createObjectURL(selected));
+    }
+  };
+
   const handleUploadProof = async () => {
-    if (!proofUrl) {
-      alert("Please enter a URL first");
+    if (!proofFile) {
+      alert("Please select an image file first");
       return;
     }
 
     const token = sessionStorage.getItem("token");
     setIsUploading(true);
     try {
+      // Step 1: Upload image to get URL
+      const formData = new FormData();
+      formData.append("file", proofFile);
+
+      const uploadRes = await fetch(`${API_BASE_URL}/upload-image`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const uploadResult = await uploadRes.json();
+      if (uploadResult.error) {
+        alert(uploadResult.message || "Failed to upload image");
+        return;
+      }
+
+      const imageUrl = uploadResult.result;
+
+      // Step 2: Send the URL to update proof of payment
       const response = await fetch(`${API_BASE_URL}/transaction/update-proof-payment/${slug}`, {
         method: "POST",
         headers: {
@@ -120,15 +162,16 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          proof_payment_url: proofUrl,
+          proof_payment_url: imageUrl,
         }),
       });
 
       const result = await response.json();
       if (!result.error) {
         alert("Proof of payment updated successfully!");
-        fetchTransactionDetail(); // Refresh data
-        setProofUrl("");
+        fetchTransactionDetail();
+        setProofFile(null);
+        setProofPreview(null);
       } else {
         alert(result.message || "Failed to update proof of payment");
       }
@@ -262,13 +305,20 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
                   <p className="text-sm text-gray-500">Invoice: {transaction.invoice_id}</p>
               )}
             </div>
-            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-              transaction.status === 'success' || transaction.status === 'paid' ? 'bg-green-100 text-green-800' :
-              transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-              'bg-gray-100 text-gray-800'
-            }`}>
-              {transaction.status.toUpperCase()}
-            </div>
+            {(() => {
+              const isProofChecking = transaction.status === 'pending' && transaction.proof_payment_url;
+              const displayStatus = isProofChecking ? 'PROOF CHECKING' : transaction.status.toUpperCase();
+              const statusClass = isProofChecking ? 'bg-blue-100 text-blue-800'
+                : (transaction.status === 'success' || transaction.status === 'paid') ? 'bg-green-100 text-green-800'
+                : transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800'
+                : transaction.status === 'cancelled' ? 'bg-red-100 text-red-800'
+                : 'bg-gray-100 text-gray-800';
+              return (
+                <div className={`px-3 py-1 rounded-full text-sm font-medium ${statusClass}`}>
+                  {displayStatus}
+                </div>
+              );
+            })()}
           </div>
           <div className="mt-4 border-t border-gray-200 pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -287,12 +337,18 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
                     </div>
                 )}
             </div>
-             <div>
-              <p className="text-sm font-medium text-gray-500">Payment Deadline</p>
-              <p className="text-base text-gray-900">
-                {transaction.expired_date ? new Date(transaction.expired_date).toLocaleString() : 'N/A'}
-              </p>
-            </div>
+             {(() => {
+              if (transaction.status === 'success' || transaction.status === 'paid' || transaction.status === 'cancelled') return null;
+              const isProofChecking = transaction.status === 'pending' && transaction.proof_payment_url;
+              return (
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Payment Deadline</p>
+                  <p className="text-base text-gray-900">
+                    {isProofChecking ? 'Proof under Checking' : (transaction.expired_date ? new Date(transaction.expired_date).toLocaleString() : 'N/A')}
+                  </p>
+                </div>
+              );
+            })()}
             <div>
               <p className="text-sm font-medium text-gray-500">Total Amount</p>
               <p className="text-base font-bold text-gray-900">
@@ -378,6 +434,31 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
         )}
 
         {/* SECTION 3: Payment Proof */}
+        {transaction.status === 'cancelled' || transaction.status === 'success' || transaction.status === 'paid' ? (
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Payment Proof</h2>
+            <p className="text-sm text-gray-500">
+              {transaction.status === 'cancelled'
+                ? 'This transaction has been cancelled. You can no longer submit proof of payment.'
+                : 'This transaction has been completed successfully.'}
+            </p>
+            {(transaction.status === 'success' || transaction.status === 'paid') && transaction.proof_payment_url && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200 break-all">
+                <a
+                  href={transaction.proof_payment_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-500 underline text-sm flex items-center gap-2"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                  </svg>
+                  View Proof of Payment
+                </a>
+              </div>
+            )}
+          </div>
+        ) : (
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Payment Proof</h2>
           
@@ -406,25 +487,33 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
             <div className="space-y-4">
               <p className="text-sm text-gray-600">
                 {transaction.proof_payment_url 
-                  ? "If you need to update your payment proof, enter the new URL below." 
-                  : "Please upload your proof of payment URL to confirm your transaction."}
+                  ? "If you need to update your payment proof, select a new image below." 
+                  : "Please upload your proof of payment image to confirm your transaction."}
               </p>
               <div>
-                <label htmlFor="proof-url" className="block text-sm font-medium text-gray-700 mb-1">
-                  {transaction.proof_payment_url ? "New Proof URL" : "Proof URL"}
+                <label htmlFor="proof-file" className="block text-sm font-medium text-gray-700 mb-1">
+                  {transaction.proof_payment_url ? "New Proof Image" : "Proof Image"}
                 </label>
                 <input
-                  type="url"
-                  id="proof-url"
-                  placeholder="https://example.com/my-receipt.jpg"
-                  value={proofUrl}
-                  onChange={(e) => setProofUrl(e.target.value)}
-                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md px-3 py-2"
+                  type="file"
+                  id="proof-file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
               </div>
+              {proofPreview && (
+                <div className="rounded-lg overflow-hidden border border-gray-200">
+                  <img
+                    src={proofPreview}
+                    alt="Preview"
+                    className="w-full max-h-60 object-contain bg-gray-50"
+                  />
+                </div>
+              )}
               <button
                 onClick={handleUploadProof}
-                disabled={isUploading}
+                disabled={isUploading || !proofFile}
                 className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUploading ? 'Uploading...' : (transaction.proof_payment_url ? 'Update Proof' : 'Submit Proof')}
@@ -432,6 +521,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
             </div>
           </div>
         </div>
+        )}
 
       </div>
     </div>

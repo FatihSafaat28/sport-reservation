@@ -4,10 +4,9 @@ export interface TransactionDetail {
   invoice_id: string;
   proof_payment_url?: string;
   payment_method_id: number
-  order_id?: string;
   status: string;
   order_date: string;
-  expired_date?: string;
+  expired_date: string;
   created_at: string;
   updated_at: string;
   transaction_items: {
