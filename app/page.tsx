@@ -1,5 +1,6 @@
 
 import Link from "next/link";
+import Image from "next/image";
 import UpcomingEvent from "./upcoming-event";
 
 export default function Homepage() {
@@ -128,6 +129,34 @@ export default function Homepage() {
                   Datang ke lokasi, tunjukkan tiket, dan nikmati keseruan mabar
                   bersama teman-teman baru!
                 </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Inviting to become event host */}
+          <section id="become-host" className="px-8 sm:px-12 lg:px-0 py-16 max-w-[1440px] mx-auto">
+            <div className="flex flex-col md:flex-row gap-10 items-center">
+              <div className="flex flex-col gap-4 justify-center items-center md:items-start md:w-1/2">
+                <div className="text-center md:text-left mb-6">
+                  <h2 className="text-3xl font-bold text-gray-900">Ingin Jadi Host Event?</h2>
+                  <p className="text-gray-500 mt-2 text-lg">
+                    Daftarkan dirimu untuk dapat mengelola event mu sendiri!
+                  </p>
+                </div>
+                <div>
+                  <Link href="/host/authentication/register" className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-full transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transform hover:-translate-y-1">
+                    Join Now
+                  </Link>
+                </div>
+              </div>
+              <div className="md:w-1/2 relative w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden shadow-xl">
+                <Image
+                  src="https://images.unsplash.com/photo-1526232761682-d26e03ac148e?q=80&w=1200&auto=format&fit=crop"
+                  alt="Group of people playing sports together"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
               </div>
             </div>
           </section>

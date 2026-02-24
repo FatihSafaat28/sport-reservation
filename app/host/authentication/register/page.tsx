@@ -5,21 +5,22 @@ import { API_BASE_URL } from "@/lib/config";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-export default function Register() {
+export default function HostRegister() {
   const router = useRouter();
-  
+
   useEffect(() => {
-     const token = sessionStorage.getItem("token");
-     if (token) {
-       router.push("/");
-     }
-   }, [router]);
+    const token = sessionStorage.getItem("token");
+    if (token) {
+      router.push("/");
+    }
+  }, [router]);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [c_password, setConfirmPassword] = useState("");
   const [phone_number, setPhoneNumber] = useState("");
+  const [loading, setLoading] = useState(false);
 
   type RegisterPayload = {
     name: string;
@@ -29,19 +30,21 @@ export default function Register() {
     phone_number: string;
     role: string;
   };
+
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (password !== c_password) {
       alert("Password dan Confirm Password tidak sama!");
       return;
     }
+    setLoading(true);
     const payload: RegisterPayload = {
       name,
       email,
       password,
       c_password,
       phone_number,
-      role: "user",
+      role: "admin",
     };
     try {
       const response = await fetch(`${API_BASE_URL}/register`, {
@@ -56,10 +59,12 @@ export default function Register() {
         alert("Register Gagal! Coba cek email / password mu!");
       } else {
         alert("Register Berhasil!");
-        router.push("/authentication/login");
+        router.push("/host/authentication/login");
       }
     } catch (error) {
-      console.error("Error fetching events:", error);
+      console.error("Error during registration:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -67,10 +72,10 @@ export default function Register() {
     <div className="w-full max-w-md mx-auto space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          Create an Account
+          Register as Event Host
         </h1>
         <p className="mt-2 text-sm text-gray-600">
-          Sign up to start booking your mabar events
+          Daftarkan dirimu untuk mengelola event olahraga di Mabarin
         </p>
       </div>
 
@@ -152,16 +157,17 @@ export default function Register() {
         </div>
 
         <button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors focus:ring-4 focus:ring-blue-500/20 mt-2 cursor-pointer"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors focus:ring-4 focus:ring-blue-500/20 mt-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           type="submit"
+          disabled={loading}
         >
-          Register
+          {loading ? "Registering..." : "Register as Host"}
         </button>
       </form>
 
       <div className="text-center text-sm text-gray-600">
         Already have an account?{" "}
-        <Link href="/authentication/login" className="font-semibold text-blue-600 hover:text-blue-500">
+        <Link href="/host/authentication/login" className="font-semibold text-blue-600 hover:text-blue-500">
           Sign in
         </Link>
       </div>

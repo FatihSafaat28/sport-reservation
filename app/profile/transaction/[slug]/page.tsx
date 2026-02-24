@@ -42,10 +42,8 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
       const result = await response.json();
       
       let transactionData = null;
-      if (result.result && !result.result.error) {
+      if(!result.error){
         transactionData = result.result;
-      } else if (result.success && result.data) {
-        transactionData = result.data;
       }
 
       if (transactionData) {
@@ -351,7 +349,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
                       <div>
                         <p className="font-medium text-gray-900">Location</p>
                         <p>{activity.address}</p>
-                        <p className="text-xs">{activity.city.city_name}, {activity.city.province.province_name}</p>
+                        <p className="text-xs">{activity.city.city_name_full}, {activity.city.province.province_name}</p>
                         {activity.map_url && (
                           <a href={activity.map_url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-xs">View on Map</a>
                         )}

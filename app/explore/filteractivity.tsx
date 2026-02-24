@@ -97,10 +97,10 @@ export default function FilterActivity() {
   // ── API Calls ────────────────────────────────────────────────────
   const fetchCategories = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/sport-categories`);
+      const res = await fetch(`${API_BASE_URL}/sport-categories?is_paginate=false`);
       if (!res.ok) throw new Error("Failed to fetch categories");
       const json = await res.json();
-      setCategories(json.result.data);
+      setCategories(json.result);
     } catch (err) {
       console.error("Error fetching categories:", err);
     }
@@ -108,10 +108,10 @@ export default function FilterActivity() {
 
   const fetchProvinces = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/location/provinces`);
+      const res = await fetch(`${API_BASE_URL}/location/provinces?is_paginate=false`);
       if (!res.ok) throw new Error("Failed to fetch provinces");
       const json = await res.json();
-      setProvinces(json.result.data);
+      setProvinces(json.result);
     } catch (err) {
       console.error("Error fetching provinces:", err);
     }
@@ -120,10 +120,10 @@ export default function FilterActivity() {
   const fetchCities = async (provinceId: string) => {
     setLoadingCities(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/location/cities/${provinceId}`);
+      const res = await fetch(`${API_BASE_URL}/location/cities/${provinceId}?is_paginate=false`);
       if (!res.ok) throw new Error("Failed to fetch cities");
       const json = await res.json();
-      setCities(json.result.data);
+      setCities(json.result);
     } catch (err) {
       console.error("Error fetching cities:", err);
     } finally {
@@ -239,7 +239,7 @@ export default function FilterActivity() {
               </option>
               {cities.map((c) => (
                 <option key={c.city_id} value={c.city_id}>
-                  {c.city_name}
+                  {c.city_name_full}
                 </option>
               ))}
             </select>

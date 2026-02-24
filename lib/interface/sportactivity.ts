@@ -6,15 +6,17 @@ export interface SportActivity {
   start_time: string;
   end_time: string;
   price: number;
+  price_discount?: number;
   address: string;
-  map_url:string;
+  map_url: string;
   city: {
-    city_name: string;
+    city_name_full: string;
     province: {
       province_name: string;
     };
   };
   organizer: {
+    id: number;
     name: string;
     email: string;
   };
@@ -22,9 +24,9 @@ export interface SportActivity {
     name: string;
   };
   participants: {
-    user : {
-      name : string;
-    }
-  }[]
+    user: {
+      name: string;
+    };
+  }[];
   slot: number;
 }

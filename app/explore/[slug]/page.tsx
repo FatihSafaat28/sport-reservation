@@ -103,7 +103,7 @@ export default async function ActivityDetailPage({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
-                  {activity.city?.city_name}, {activity.city?.province?.province_name}
+                  {activity.city?.city_name_full}, {activity.city?.province?.province_name}
                 </div>
               </div>
 
@@ -166,7 +166,7 @@ export default async function ActivityDetailPage({
                  </div>
                  <div>
                     <p className="text-gray-900 font-medium">{activity.address}</p>
-                    <p className="text-gray-500 text-sm mt-1">{activity.city?.city_name}, {activity.city?.province?.province_name}</p>
+                    <p className="text-gray-500 text-sm mt-1">{activity.city?.city_name_full}, {activity.city?.province?.province_name}</p>
                     <Link href={activity.map_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 font-medium text-sm mt-2 inline-flex items-center gap-1">
                         View on Google Maps
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

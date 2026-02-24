@@ -5,11 +5,13 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import Link from "next/link";
 
-export default function Login() {
+export default function HostLogin() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+
   type LoginPayload = {
     email: string;
     password: string;
@@ -24,6 +26,7 @@ export default function Login() {
 
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setLoading(true);
     const payload: LoginPayload = {
       email,
       password,
@@ -40,6 +43,7 @@ export default function Login() {
       if (!result.success) {
         alert("Login Gagal! Coba cek email / password mu!");
       } else {
+        // Store token and basic info
         sessionStorage.setItem("token", result.data.token);
         sessionStorage.setItem("email", result.data.email);
         sessionStorage.setItem("name", result.data.name);
@@ -65,6 +69,8 @@ export default function Login() {
       }
     } catch (error) {
       console.error("Error during login:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,10 +78,10 @@ export default function Login() {
     <div className="w-full max-w-md mx-auto space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-          Welcome Back
+          Host Login
         </h1>
         <p className="mt-2 text-sm text-gray-600">
-          Enter your email and password to login.
+          Masuk ke akun host untuk mengelola event mu.
         </p>
       </div>
 
@@ -130,17 +136,18 @@ export default function Login() {
         </div>
 
         <button
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors focus:ring-4 focus:ring-blue-500/20 cursor-pointer"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition-colors focus:ring-4 focus:ring-blue-500/20 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           type="submit"
+          disabled={loading}
         >
-          Sign In
+          {loading ? "Signing in..." : "Sign In"}
         </button>
       </form>
 
       <div className="text-center text-sm text-gray-600">
-        Don't have an account?{" "}
-        <Link href="/authentication/register" className="font-semibold text-blue-600 hover:text-blue-500">
-          Sign up
+        Don&apos;t have a host account?{" "}
+        <Link href="/host/authentication/register" className="font-semibold text-blue-600 hover:text-blue-500">
+          Register as Host
         </Link>
       </div>
     </div>

@@ -83,10 +83,10 @@ export default function BookingDialog({ activity, className }: BookingDialogProp
 
       const result = await response.json();
 
-      if (response.ok) {
+      if (!result.error) {
         alert("Booking successful!");
         setIsOpen(false);
-        router.push('/dashboard'); // Redirect to dashboard or relevant page
+        router.push(`/profile/transaction/${result.result.id}`);
       } else {
         alert(result.message || "Booking failed. Please try again.");
       }
@@ -176,7 +176,7 @@ export default function BookingDialog({ activity, className }: BookingDialogProp
                     <label className="text-xs font-medium text-gray-500 uppercase mb-1 block">Location</label>
                     <div className="bg-gray-50 p-3 rounded-xl text-sm text-gray-700 space-y-1">
                         <p className="font-medium">{activity.address}</p>
-                        <p className="text-gray-500">{activity.city?.city_name}, {activity.city?.province?.province_name}</p>
+                        <p className="text-gray-500">{activity.city?.city_name_full}, {activity.city?.province?.province_name}</p>
                         {activity.map_url && (
                              <a 
                                 href={activity.map_url} 

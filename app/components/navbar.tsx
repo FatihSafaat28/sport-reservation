@@ -9,15 +9,18 @@ export default function Navbar() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
+  const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
     // Check if user is logged in
     const token = sessionStorage.getItem("token");
     const name = sessionStorage.getItem("name");
+    const role = sessionStorage.getItem("role");
 
     if (token && name) {
       setIsLoggedIn(true);
       setUserName(name);
+      setUserRole(role || "user");
     }
   }, []);
 
@@ -48,6 +51,7 @@ export default function Navbar() {
       sessionStorage.removeItem("token");
       sessionStorage.removeItem("email");
       sessionStorage.removeItem("name");
+      sessionStorage.removeItem("role");
 
       // Redirect to home with hard refresh
       window.location.href = "/";
@@ -163,7 +167,7 @@ export default function Navbar() {
                   {isDropdownOpen && (
                     <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700">
                       <Link
-                        href="/profile"
+                        href={userRole === "admin" ? "/host/profile" : "/profile"}
                         className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
                         onClick={() => {
                           setIsDropdownOpen(false);
@@ -172,16 +176,29 @@ export default function Navbar() {
                       >
                         Profile
                       </Link>
-                      <Link
-                        href="/profile/transaction"
-                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
-                        onClick={() => {
-                          setIsDropdownOpen(false);
-                          setIsOpen(false);
-                        }}
-                      >
-                        Transaction
-                      </Link>
+                      {userRole === "admin" ? (
+                        <Link
+                          href="/host/myevents"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            setIsOpen(false);
+                          }}
+                        >
+                          My Events
+                        </Link>
+                      ) : (
+                        <Link
+                          href="/profile/transaction"
+                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                          onClick={() => {
+                            setIsDropdownOpen(false);
+                            setIsOpen(false);
+                          }}
+                        >
+                          Transaction
+                        </Link>
+                      )}
                       <button
                         onClick={() => {
                           handleLogout();
