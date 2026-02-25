@@ -5,12 +5,14 @@ import { API_BASE_URL } from "@/lib/config";
 import { SportActivity } from "@/lib/interface/sportactivity";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { TransactionDetail } from "@/lib/interface/transactiondetail";
 
 export default function MyEventsPage() {
   const router = useRouter();
   const [activities, setActivities] = useState<SportActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<number | null>(null);
+  const [pendingCounts, setPendingCounts] = useState<Record<number, number>>({});
 
   useEffect(() => {
     const token = sessionStorage.getItem("token");
@@ -43,12 +45,43 @@ export default function MyEventsPage() {
         }
       );
       const activitiesData = await activitiesRes.json();
+      let myActivities: SportActivity[] = [];
       if (!activitiesData.error) {
         // Filter by organizer id
-        const myActivities = activitiesData.result.filter(
+        myActivities = activitiesData.result.filter(
           (a: SportActivity) => a.organizer?.id === currentUserId
         );
         setActivities(myActivities);
+      }
+
+      // Fetch all transactions and count pending per activity
+      if (myActivities.length > 0) {
+        try {
+          const txRes = await fetch(
+            `${API_BASE_URL}/all-transaction?is_paginate=false`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          );
+          const txData = await txRes.json();
+          if (!txData.error) {
+            const myActivityIds = new Set(myActivities.map((a) => a.id));
+            const counts: Record<number, number> = {};
+            (txData.result || []).forEach((tx: TransactionDetail) => {
+              const activityId = tx.transaction_items?.sport_activity_id;
+              if (
+                activityId &&
+                myActivityIds.has(activityId) &&
+                tx.status?.toLowerCase() === "pending"
+              ) {
+                counts[activityId] = (counts[activityId] || 0) + 1;
+              }
+            });
+            setPendingCounts(counts);
+          }
+        } catch (txError) {
+          console.error("Error fetching transactions:", txError);
+        }
       }
     } catch (error) {
       console.error("Error fetching events:", error);
@@ -127,6 +160,7 @@ export default function MyEventsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {activities.map((event) => {
             const isPast = new Date(event.activity_date) < new Date();
+            const pendingCount = pendingCounts[event.id] || 0;
             return (
               <Link
                 key={event.id}
@@ -180,6 +214,17 @@ export default function MyEventsPage() {
                       {event.city?.city_name_full}, {event.city?.province?.province_name}
                     </span>
                   </div>
+                  {/* Pending Transactions Badge */}
+                  {pendingCount > 0 && (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <svg className="w-4 h-4 text-yellow-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span className="text-xs font-semibold text-yellow-700">
+                        {pendingCount} Pending Transaction{pendingCount > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Card Footer */}

@@ -133,6 +133,7 @@ export default function ProfilePage() {
     }
   };
 
+  {/* Loading Skeleton */}
   if (loading) {
     return (
       <div className="min-h-screen bg-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
