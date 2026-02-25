@@ -140,7 +140,20 @@ export default function ManageEventPage() {
         headers: { Authorization: `Bearer ${t}` },
       });
       const data = await res.json();
-      if (!data.error) setActivities(data.result || []);
+      if (!data.error) {
+        const all: SportActivity[] = data.result || [];
+        const now = new Date();
+
+        const active = [...all]
+          .filter((a) => new Date(a.activity_date) >= now)
+          .sort((a, b) => new Date(b.activity_date).getTime() - new Date(a.activity_date).getTime());
+
+        const ended = [...all]
+          .filter((a) => new Date(a.activity_date) < now)
+          .sort((a, b) => new Date(b.activity_date).getTime() - new Date(a.activity_date).getTime());
+
+        setActivities([...active, ...ended]);
+      }
     } catch (error) {
       console.error("Error fetching activities:", error);
     } finally {
