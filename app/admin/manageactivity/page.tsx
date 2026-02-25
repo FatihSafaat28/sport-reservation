@@ -25,8 +25,10 @@ export default function ManageEventPage() {
   const [activities, setActivities] = useState<SportActivity[]>([]);
   const [activityLoading, setActivityLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const [deletingActivityId, setDeletingActivityId] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
+  const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
     const t = sessionStorage.getItem("token");
@@ -179,6 +181,12 @@ export default function ManageEventPage() {
     a.title.toLowerCase().includes(search.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredActivities.length / ITEMS_PER_PAGE);
+  const paginatedActivities = filteredActivities.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="max-w-[1440px] mx-auto px-6 py-8">
       {/* Header */}
@@ -216,14 +224,14 @@ export default function ManageEventPage() {
         </form>
 
         {/* Category List */}
-        <div className="space-y-2">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
           {categories.length === 0 ? (
-            <p className="text-gray-400 text-sm text-center py-4">Belum ada kategori.</p>
+            <p className="text-gray-400 text-sm text-center py-4 col-span-full">Belum ada kategori.</p>
           ) : (
             categories.map((cat) => (
               <div
                 key={cat.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                className={`flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors ${editingCategoryId === cat.id ? "col-span-full" : ""}`}
               >
                 {editingCategoryId === cat.id ? (
                   <div className="flex items-center gap-2 flex-1">
@@ -251,7 +259,7 @@ export default function ManageEventPage() {
                 ) : (
                   <>
                     <span className="text-sm font-medium text-gray-900">{cat.name}</span>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1">
                       <button
                         onClick={() => { setEditingCategoryId(cat.id); setEditCategoryName(cat.name); }}
                         className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -298,7 +306,7 @@ export default function ManageEventPage() {
               placeholder="Cari event..."
               className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white text-gray-900 text-sm"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
             />
           </div>
         </div>
@@ -315,6 +323,7 @@ export default function ManageEventPage() {
             <p className="text-gray-400">Tidak ada event ditemukan.</p>
           </div>
         ) : (
+          <>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -329,7 +338,7 @@ export default function ManageEventPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredActivities.map((activity) => {
+                {paginatedActivities.map((activity) => {
                   const isPast = new Date(activity.activity_date) < new Date();
                   return (
                     <tr key={activity.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
@@ -385,6 +394,45 @@ export default function ManageEventPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+              <p className="text-sm text-gray-500">
+                Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredActivities.length)} of {filteredActivities.length}
+              </p>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Prev
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                      currentPage === page
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-600 hover:bg-gray-50 border border-gray-300"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
+          </>
         )}
       </div>
 
