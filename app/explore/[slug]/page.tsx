@@ -3,6 +3,7 @@ import { SportActivity } from "@/lib/interface/sportactivity";
 import Link from "next/link";
 import ParticipantsList from "./ParticipantsList";
 import BookingDialog from "./BookingDialog";
+import BookingWrapper from "./BookingWrapper";
 
 
 export default async function ActivityDetailPage({
@@ -108,6 +109,7 @@ export default async function ActivityDetailPage({
               </div>
 
                {/* Booking Section */}
+               <BookingWrapper>
                <div className="hidden md:block lg:hidden mb-6 p-4 bg-white rounded-xl border border-gray-200 shadow-sm">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-gray-500 font-medium">Price</span>
@@ -130,6 +132,7 @@ export default async function ActivityDetailPage({
                      />
                    )}
                </div>
+               </BookingWrapper>
             </div>
 
             {/* Description */}
@@ -182,6 +185,7 @@ export default async function ActivityDetailPage({
           </div>
 
           {/* Sidebar - Desktop Price Card */}
+          <BookingWrapper>
           <div className="hidden lg:block">
             <div className="sticky top-[168px] bg-white rounded-2xl p-6 shadow-lg ring-1 ring-gray-100">
               <div className="space-y-4">
@@ -226,10 +230,12 @@ export default async function ActivityDetailPage({
               </div>
             </div>
           </div>
+          </BookingWrapper>
         </div>
       </div>
 
           {/* Mobile Sticky Footer Price */}
+          <BookingWrapper>
           <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 md:hidden shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 safe-area-bottom">
             <div className="flex items-center gap-4">
               <div className="flex-1">
@@ -252,6 +258,7 @@ export default async function ActivityDetailPage({
               )}
             </div>
           </div>
+          </BookingWrapper>
     </main>
   );
 }

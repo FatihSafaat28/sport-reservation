@@ -3,31 +3,14 @@
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { useRouter } from "next/navigation";
+import { TransactionDetail } from "@/lib/interface/transactiondetail";
 import Link from "next/link";
 
 const ADMIN_EMAIL = "axionadmin123@mail.com";
 
-interface Transaction {
-  id: string;
-  total_amount: number;
-  invoice_id: string;
-  status: string;
-  order_date: string;
-  user: {
-    name: string;
-    email: string;
-  };
-  transaction_items: {
-    sport_activity_id: number;
-    sport_activities: {
-      title: string;
-    };
-  };
-}
-
 export default function ManageTransactionPage() {
   const router = useRouter();
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactions, setTransactions] = useState<TransactionDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
 

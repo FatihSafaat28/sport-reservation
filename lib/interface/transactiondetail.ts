@@ -9,6 +9,10 @@ export interface TransactionDetail {
   expired_date: string;
   created_at: string;
   updated_at: string;
+  user?: {
+    name: string;
+    email: string;
+  };
   transaction_items: {
     sport_activity_id: number;
     sport_activities : {

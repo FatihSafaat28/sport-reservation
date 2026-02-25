@@ -4,13 +4,10 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { useRouter } from "next/navigation";
 import { SportActivity } from "@/lib/interface/sportactivity";
+import { TransactionDetail } from "@/lib/interface/transactiondetail";
 
 const ADMIN_EMAIL = "axionadmin123@mail.com";
 
-interface Transaction {
-  id: string;
-  status: string;
-}
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -61,7 +58,7 @@ export default function AdminDashboard() {
         }
       });
 
-      const transactions: Transaction[] = transactionsData.result || [];
+      const transactions: TransactionDetail[] = transactionsData.result || [];
       let successCount = 0;
       let pendingCount = 0;
       let cancelledCount = 0;

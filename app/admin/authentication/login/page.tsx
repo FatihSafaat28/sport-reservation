@@ -41,9 +41,9 @@ export default function AdminLogin() {
         return;
       }
 
-      // Check if email matches admin email
+      // Check email admin
       if (result.data.email !== ADMIN_EMAIL) {
-        // Not the real admin — logout immediately
+        // if not then logout
         try {
           await fetch(`${API_BASE_URL}/logout`, {
             method: "POST",

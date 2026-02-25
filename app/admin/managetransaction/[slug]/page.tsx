@@ -3,36 +3,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { useRouter, useParams } from "next/navigation";
+import { TransactionDetail } from "@/lib/interface/transactiondetail";
 import Link from "next/link";
 
 const ADMIN_EMAIL = "axionadmin123@mail.com";
 
-interface TransactionDetail {
-  id: string;
-  total_amount: number;
-  invoice_id: string;
-  proof_payment_url?: string;
-  payment_method_id: number;
-  status: string;
-  order_date: string;
-  expired_date: string;
-  created_at: string;
-  updated_at: string;
-  user?: {
-    name: string;
-    email: string;
-  };
-  transaction_items: {
-    sport_activity_id: number;
-    sport_activities: {
-      title: string;
-      address: string;
-      activity_date: string;
-      start_time: string;
-      end_time: string;
-    };
-  };
-}
 
 export default function TransactionDetailPage() {
   const router = useRouter();
@@ -253,7 +228,7 @@ export default function TransactionDetailPage() {
                 {updating ? "Updating..." : "✓ Approve (Success)"}
               </button>
               <button
-                onClick={() => handleUpdateStatus("cancelled")}
+                onClick={() => handleUpdateStatus("success")}
                 disabled={updating}
                 className="flex-1 px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors text-sm border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed text-center"
               >
