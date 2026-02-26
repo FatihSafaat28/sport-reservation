@@ -9,6 +9,16 @@ export default function TransactionPage() {
   const router = useRouter();
   const [transactions, setTransactions] = useState<TransactionDetail[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<"all" | "pending" | "success" | "cancelled">("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const perPage = 5;
+
+  const filters = [
+    { key: "all" as const, label: "All" },
+    { key: "pending" as const, label: "Pending" },
+    { key: "success" as const, label: "Success" },
+    { key: "cancelled" as const, label: "Cancelled" },
+  ];
 
   useEffect(() => {
     fetchTransactions();
@@ -68,6 +78,54 @@ export default function TransactionPage() {
     }
   };
 
+  // Check if a transaction is "pending" (includes proof checking)
+  const isPending = (t: TransactionDetail) => t.status === "pending";
+
+  // Check if a transaction is "success"
+  const isSuccess = (t: TransactionDetail) => t.status === "success" || t.status === "paid";
+
+  // Check if a transaction is "cancelled"
+  const isCancelled = (t: TransactionDetail) => t.status === "cancelled";
+
+  // Filter & sort transactions based on active filter
+  const filteredTransactions = (() => {
+    let filtered: TransactionDetail[];
+
+    switch (activeFilter) {
+      case "pending":
+        filtered = transactions.filter(isPending);
+        break;
+      case "success":
+        filtered = transactions.filter(isSuccess);
+        break;
+      case "cancelled":
+        filtered = transactions.filter(isCancelled);
+        break;
+      default:
+        // "all" — sort pending first
+        filtered = [...transactions].sort((a, b) => {
+          const aPending = isPending(a) ? 0 : 1;
+          const bPending = isPending(b) ? 0 : 1;
+          return aPending - bPending;
+        });
+        break;
+    }
+
+    return filtered;
+  })();
+
+  // Pagination
+  const totalPages = Math.ceil(filteredTransactions.length / perPage);
+  const paginatedTransactions = filteredTransactions.slice(
+    (currentPage - 1) * perPage,
+    currentPage * perPage
+  );
+
+  // Reset page when filter changes
+  const handleFilterChange = (filter: typeof activeFilter) => {
+    setActiveFilter(filter);
+    setCurrentPage(1);
+  };
 
   // Derive display status and expires label
   const getDisplayInfo = (t: TransactionDetail) => {
@@ -102,12 +160,27 @@ export default function TransactionPage() {
     };
   };
 
+  // Badge style for filter buttons
+  const getFilterStyle = (key: string) => {
+    if (key === activeFilter) {
+      return "bg-blue-600 text-white shadow-sm";
+    }
+    return "bg-gray-100 text-gray-600 hover:bg-gray-200";
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           {/* Header Skeleton */}
           <div className="h-8 w-52 bg-gray-200 rounded-md animate-pulse mb-8" />
+
+          {/* Filter Skeleton */}
+          <div className="flex gap-2 mb-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-8 w-20 bg-gray-200 rounded-full animate-pulse" />
+            ))}
+          </div>
 
           {/* Transaction Card Skeletons */}
           <div className="grid gap-6">
@@ -151,15 +224,32 @@ export default function TransactionPage() {
   return (
     <div className="min-h-screen bg-white pt-24 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">My Transactions</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-6">My Transactions</h1>
         
-        {transactions.length === 0 ? (
+        {/* Filter Badges */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          {filters.map((filter) => (
+            <button
+              key={filter.key}
+              onClick={() => handleFilterChange(filter.key)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all cursor-pointer ${getFilterStyle(filter.key)}`}
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
+
+        {filteredTransactions.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-            <p className="text-gray-500">No transactions found.</p>
+            <p className="text-gray-500">
+              {activeFilter === "all"
+                ? "No transactions found."
+                : `No ${activeFilter} transactions found.`}
+            </p>
           </div>
         ) : (
           <div className="grid gap-6">
-            {transactions.map((transaction) => (
+            {paginatedTransactions.map((transaction) => (
               <div key={transaction.id} className="bg-white rounded-2xl p-6 hover:shadow-lg transition-all border border-gray-200">
                 <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-4">
                   <div className="space-y-1">
@@ -230,6 +320,41 @@ export default function TransactionPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Pagination — hidden when 5 or fewer items */}
+        {filteredTransactions.length > perPage && (
+          <div className="flex items-center justify-center gap-2 mt-8">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1.5 rounded-md text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              Previous
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-9 h-9 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+                  page === currentPage
+                    ? "bg-blue-600 text-white shadow-sm"
+                    : "border border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1.5 rounded-md text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>
