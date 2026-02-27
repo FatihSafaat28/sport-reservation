@@ -60,7 +60,7 @@ export default function TransactionDetailPage() {
       });
       const data = await res.json();
       if (!data.error) {
-        alert(`Status transaksi berhasil diupdate ke ${status}!`);
+        alert(`Status transaksi berhasil diupdate`);
         fetchTransaction();
       } else {
         alert(data.message || "Gagal mengupdate status.");
