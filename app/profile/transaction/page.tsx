@@ -250,9 +250,9 @@ export default function TransactionPage() {
         ) : (
           <div className="grid gap-6">
             {paginatedTransactions.map((transaction) => (
-              <div key={transaction.id} className="bg-white rounded-2xl p-6 hover:shadow-lg transition-all border border-gray-200">
+              <div key={transaction.id} className="bg-white rounded-2xl p-6 hover:shadow-lg transition-all border border-gray-200 overflow-hidden">
                 <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-4">
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <h3 className="text-lg font-bold text-gray-900">
                       Invoice: {transaction.invoice_id}
                     </h3>
@@ -273,7 +273,7 @@ export default function TransactionPage() {
                   {(() => {
                     const info = getDisplayInfo(transaction);
                     return (
-                      <div className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${info.statusClass}`}>
+                      <div className={`px-3 py-1 rounded-full text-xs sm:text-sm font-medium w-fit whitespace-nowrap ${info.statusClass}`}>
                         {info.displayStatus}
                       </div>
                     );
