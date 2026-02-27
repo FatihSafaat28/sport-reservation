@@ -5,6 +5,7 @@ import { API_BASE_URL } from "@/lib/config";
 import { SportActivity } from "@/lib/interface/sportactivity";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import EditEventDialog from "./EditEventDialog";
 
 const ADMIN_EMAIL = "axionadmin123@mail.com";
 
@@ -17,6 +18,7 @@ export default function AdminEventDetailPage() {
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
 
@@ -218,8 +220,14 @@ export default function AdminEventDetailPage() {
             </a>
           )}
 
-          {/* Delete Button */}
+          {/* Action Buttons */}
           <div className="flex gap-3 pt-4 border-t border-gray-100">
+            <button
+              onClick={() => setShowEditDialog(true)}
+              className="px-5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium rounded-lg transition-colors text-sm border border-blue-200"
+            >
+              Edit Event
+            </button>
             <button
               onClick={() => setShowDeleteConfirm(true)}
               className="px-5 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors text-sm border border-red-200"
@@ -249,6 +257,19 @@ export default function AdminEventDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Event Dialog */}
+      {showEditDialog && token && (
+        <EditEventDialog
+          activity={activity}
+          token={token}
+          onClose={() => setShowEditDialog(false)}
+          onUpdated={() => {
+            setShowEditDialog(false);
+            fetchActivity();
+          }}
+        />
       )}
 
       {/* Delete Confirmation Dialog */}

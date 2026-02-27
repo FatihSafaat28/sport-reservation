@@ -8,6 +8,12 @@ import { API_BASE_URL } from "@/lib/config";
 export default function AdminNavbar() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const token = sessionStorage.getItem("token");
+    setIsLoggedIn(!!token);
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -80,6 +86,7 @@ export default function AdminNavbar() {
           </div>
 
           {/* Mobile Menu Button */}
+          {isLoggedIn && (
           <div className="flex md:hidden">
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -100,8 +107,10 @@ export default function AdminNavbar() {
               </div>
             </button>
           </div>
+          )}
 
           {/* Desktop Menu */}
+          {isLoggedIn && (
           <div className="hidden md:flex md:items-center md:gap-1">
             {menu.map((item) => (
               <Link
@@ -118,8 +127,10 @@ export default function AdminNavbar() {
               </Link>
             ))}
           </div>
+          )}
 
           {/* Desktop Logout */}
+          {isLoggedIn && (
           <div className="hidden md:flex md:items-center">
             <button
               onClick={handleLogout}
@@ -131,9 +142,11 @@ export default function AdminNavbar() {
               Logout
             </button>
           </div>
+          )}
         </div>
 
         {/* Mobile Menu */}
+        {isLoggedIn && (
         <div
           className={`${
             isOpen ? "block" : "hidden"
@@ -169,6 +182,7 @@ export default function AdminNavbar() {
             </button>
           </div>
         </div>
+        )}
       </div>
     </nav>
   );

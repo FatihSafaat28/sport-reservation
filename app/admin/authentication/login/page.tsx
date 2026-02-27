@@ -77,7 +77,7 @@ export default function AdminLogin() {
         console.error("Error fetching user profile:", err);
       }
 
-      router.push("/admin");
+      window.location.href = "/admin";
     } catch (error) {
       console.error("Error during login:", error);
       setError("Terjadi kesalahan saat login. Coba lagi!");
