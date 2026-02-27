@@ -80,51 +80,50 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Mobile Menu Button (Hamburger) */}
+          {/* Mobile Menu Button */}
           <div className="flex md:hidden">
-            <button
-              onClick={() => setIsOpen(!isOpen)}
-              type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white transition-colors"
-              aria-controls="mobile-menu"
-              aria-expanded={isOpen}
-            >
-              <span className="sr-only">Open main menu</span>
-              {/* Icon switching */}
-              <div className="relative w-6 h-6">
-                {isOpen ? (
-                  <svg
-                    className="w-6 h-6"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    className="w-6 h-6"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  </svg>
-                )}
-              </div>
-            </button>
+            {isLoggedIn ? (
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                type="button"
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+                aria-controls="mobile-menu"
+                aria-expanded={isOpen}
+              >
+                <span className="text-sm">Hi, <span className="font-semibold text-white">{userName}</span></span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                  className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+            ) : (
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                type="button"
+                className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white transition-colors"
+                aria-controls="mobile-menu"
+                aria-expanded={isOpen}
+              >
+                <span className="sr-only">Open main menu</span>
+                <div className="relative w-6 h-6">
+                  {isOpen ? (
+                    <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  ) : (
+                    <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  )}
+                </div>
+              </button>
+            )}
           </div>
 
           {/* Merged Menu & Buttons */}
@@ -143,17 +142,56 @@ export default function Navbar() {
                 <Link
                   key={item.label}
                   href={item.href}
-                  className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 block"
+                  className="text-gray-300 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 block"
                   onClick={() => setIsOpen(false)}
                 >
                   {item.label}
                 </Link>
               ))}
             </div>
-            {/* Desktop/Mobile Auth Buttons */}
+
+            {/* Mobile User Menu (logged in) */}
+            {isLoggedIn && (
+              <div className="flex flex-col gap-1 pt-4 border-t border-gray-800 md:hidden">
+                <Link
+                  href={userRole === "admin" ? "/host/profile" : "/profile"}
+                  className="text-gray-300 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 block"
+                  onClick={() => setIsOpen(false)}
+                >
+                  Profile
+                </Link>
+                {userRole === "admin" ? (
+                  <Link
+                    href="/host/myevents"
+                    className="text-gray-300 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 block"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    My Events
+                  </Link>
+                ) : (
+                  <Link
+                    href="/profile/transaction"
+                    className="text-gray-300 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 block"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    Transaction
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsOpen(false);
+                  }}
+                  className="text-red-400 hover:text-red-300 hover:bg-gray-800 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 block text-center"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+            {/* Desktop Auth (logged in) / Mobile+Desktop Auth (not logged in) */}
             <div className={`${isOpen ? "flex" : "hidden"} md:flex flex-col md:flex-row md:items-center gap-3 pt-4 border-t border-gray-800 md:pt-0 md:border-none`}>
               {isLoggedIn ? (
-                <div className="relative">
+                <div className="relative hidden md:block">
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors focus:outline-none"
