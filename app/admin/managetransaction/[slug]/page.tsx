@@ -46,7 +46,7 @@ export default function TransactionDetailPage() {
     }
   }, [slug, token]);
 
-  const handleUpdateStatus = async (status: string) => {
+  const handleUpdateStatus = async () => {
     if (!token) return;
     setUpdating(true);
     try {
@@ -56,7 +56,7 @@ export default function TransactionDetailPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status: "success" }),
       });
       const data = await res.json();
       if (!data.error) {
@@ -67,6 +67,33 @@ export default function TransactionDetailPage() {
       }
     } catch (error) {
       console.error("Error updating status:", error);
+      alert("Terjadi kesalahan.");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleCancelTransaction = async () => {
+    if (!token) return;
+    setUpdating(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/transaction/cancel/${slug}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ status: "success" }),
+      });
+      const data = await res.json();
+      if (!data.error) {
+        alert("Transaksi berhasil dibatalkan!");
+        fetchTransaction();
+      } else {
+        alert(data.message || "Gagal membatalkan transaksi.");
+      }
+    } catch (error) {
+      console.error("Error cancelling transaction:", error);
       alert("Terjadi kesalahan.");
     } finally {
       setUpdating(false);
@@ -201,13 +228,25 @@ export default function TransactionDetailPage() {
 
           {/* Proof of Payment */}
           {transaction.proof_payment_url && (
-            <div className="mb-6">
-              <p className="text-sm font-medium text-gray-700 mb-2">Proof of Payment</p>
+            <div className="p-4 bg-green-50/50 rounded-lg border border-green-100 mb-6">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Proof of Payment
+              </h3>
+              <div className="rounded-lg overflow-hidden border border-green-200 bg-white mb-3">
+                <img
+                  src={transaction.proof_payment_url}
+                  alt="Proof of Payment"
+                  className="w-full max-h-[400px] object-contain"
+                />
+              </div>
               <a
                 href={transaction.proof_payment_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+                className="inline-flex items-center gap-1.5 text-sm text-green-600 hover:text-green-700 font-medium transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
@@ -221,14 +260,14 @@ export default function TransactionDetailPage() {
           {!isFinalStatus(transaction.status) && (
             <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
               <button
-                onClick={() => handleUpdateStatus("success")}
+                onClick={handleUpdateStatus}
                 disabled={updating}
                 className="flex-1 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed text-center"
               >
                 {updating ? "Updating..." : "✓ Approve (Success)"}
               </button>
               <button
-                onClick={() => handleUpdateStatus("success")}
+                onClick={handleCancelTransaction}
                 disabled={updating}
                 className="flex-1 px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors text-sm border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed text-center"
               >

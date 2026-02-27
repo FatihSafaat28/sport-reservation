@@ -13,6 +13,15 @@ export default function ManageTransactionPage() {
   const [transactions, setTransactions] = useState<TransactionDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     const token = sessionStorage.getItem("token");
@@ -31,7 +40,11 @@ export default function ManageTransactionPage() {
       });
       const data = await res.json();
       if (!data.error) {
-        setTransactions(data.result || []);
+        const sorted = (data.result || []).sort(
+          (a: TransactionDetail, b: TransactionDetail) =>
+            new Date(b.order_date).getTime() - new Date(a.order_date).getTime()
+        );
+        setTransactions(sorted);
       }
     } catch (error) {
       console.error("Error fetching transactions:", error);
@@ -66,6 +79,18 @@ export default function ManageTransactionPage() {
       t.transaction_items?.sport_activities?.title?.toLowerCase().includes(q)
     );
   });
+
+  const perPage = isMobile ? 10 : 15;
+  const totalPages = Math.ceil(filteredTransactions.length / perPage);
+  const paginatedTransactions = filteredTransactions.slice(
+    (currentPage - 1) * perPage,
+    currentPage * perPage
+  );
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
 
   return (
     <div className="max-w-[1440px] mx-auto px-6 py-8">
@@ -121,7 +146,7 @@ export default function ManageTransactionPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredTransactions.map((tx) => (
+                {paginatedTransactions.map((tx) => (
                   <tr key={tx.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="py-3 px-3">
                       <Link
@@ -163,6 +188,59 @@ export default function ManageTransactionPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!loading && totalPages > 1 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-6 pt-4 border-t border-gray-100">
+            <p className="text-sm text-gray-500">
+              Showing {(currentPage - 1) * perPage + 1}-{Math.min(currentPage * perPage, filteredTransactions.length)} of {filteredTransactions.length} transactions
+            </p>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((page) => {
+                  if (totalPages <= 7) return true;
+                  if (page === 1 || page === totalPages) return true;
+                  if (Math.abs(page - currentPage) <= 1) return true;
+                  return false;
+                })
+                .map((page, idx, arr) => (
+                  <span key={page} className="flex items-center">
+                    {idx > 0 && arr[idx - 1] !== page - 1 && (
+                      <span className="px-1 text-gray-400 text-sm">…</span>
+                    )}
+                    <button
+                      onClick={() => setCurrentPage(page)}
+                      className={`min-w-[36px] h-9 px-2 text-sm font-medium rounded-lg transition-colors ${
+                        currentPage === page
+                          ? "bg-blue-600 text-white"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  </span>
+                ))}
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
           </div>
         )}
       </div>

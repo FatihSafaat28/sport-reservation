@@ -286,6 +286,7 @@ The app connects to a REST API at the base URL defined in `.env`. Key endpoints 
 | `/api/v1/transaction/:id`                      | GET    | Fetch transaction detail  |
 | `/api/v1/transaction/update-proof-payment/:id` | POST   | Upload proof of payment   |
 | `/api/v1/transaction/update-status/:id`        | POST   | Update transaction status |
+| `/api/v1/transaction/cancel/:id`               | POST   | Cancel transaction        |
 
 ### Payment Endpoints
 
