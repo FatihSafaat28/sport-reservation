@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { SportActivity } from "@/lib/interface/sportactivity";
 import { TransactionDetail } from "@/lib/interface/transactiondetail";
 
-const ADMIN_EMAIL = "axionadmin123@mail.com";
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 
 export default function AdminDashboard() {

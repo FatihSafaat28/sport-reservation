@@ -7,7 +7,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import EditEventDialog from "./EditEventDialog";
 
-const ADMIN_EMAIL = "axionadmin123@mail.com";
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
 export default function AdminEventDetailPage() {
   const router = useRouter();
