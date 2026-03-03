@@ -25,11 +25,26 @@ export default function MyEventsPage() {
 
   const fetchUserAndEvents = async (token: string) => {
     try {
-      // Fetch current user to get ID
-      const meRes = await fetch(`${API_BASE_URL}/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const meData = await meRes.json();
+      // Fetch user, activities, and transactions in parallel
+      const [meRes, activitiesRes, txRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE_URL}/sport-activities?is_paginate=false`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`${API_BASE_URL}/all-transaction?is_paginate=false`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+
+      const [meData, activitiesData, txData] = await Promise.all([
+        meRes.json(),
+        activitiesRes.json(),
+        txRes.json(),
+      ]);
+
+      // Validate token
       if (!meData.success) {
         router.push("/host/authentication/login");
         return;
@@ -37,51 +52,30 @@ export default function MyEventsPage() {
       const currentUserId = meData.data.id;
       setUserId(currentUserId);
 
-      // Fetch all activities
-      const activitiesRes = await fetch(
-        `${API_BASE_URL}/sport-activities?is_paginate=false`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      const activitiesData = await activitiesRes.json();
+      // Filter activities by organizer id
       let myActivities: SportActivity[] = [];
       if (!activitiesData.error) {
-        // Filter by organizer id
         myActivities = activitiesData.result.filter(
           (a: SportActivity) => a.organizer?.id === currentUserId
         );
         setActivities(myActivities);
       }
 
-      // Fetch all transactions and count pending per activity
-      if (myActivities.length > 0) {
-        try {
-          const txRes = await fetch(
-            `${API_BASE_URL}/all-transaction?is_paginate=false`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-          const txData = await txRes.json();
-          if (!txData.error) {
-            const myActivityIds = new Set(myActivities.map((a) => a.id));
-            const counts: Record<number, number> = {};
-            (txData.result || []).forEach((tx: TransactionDetail) => {
-              const activityId = tx.transaction_items?.sport_activity_id;
-              if (
-                activityId &&
-                myActivityIds.has(activityId) &&
-                tx.status?.toLowerCase() === "pending"
-              ) {
-                counts[activityId] = (counts[activityId] || 0) + 1;
-              }
-            });
-            setPendingCounts(counts);
+      // Count pending transactions per activity
+      if (myActivities.length > 0 && !txData.error) {
+        const myActivityIds = new Set(myActivities.map((a) => a.id));
+        const counts: Record<number, number> = {};
+        (txData.result || []).forEach((tx: TransactionDetail) => {
+          const activityId = tx.transaction_items?.sport_activity_id;
+          if (
+            activityId &&
+            myActivityIds.has(activityId) &&
+            tx.status?.toLowerCase() === "pending"
+          ) {
+            counts[activityId] = (counts[activityId] || 0) + 1;
           }
-        } catch (txError) {
-          console.error("Error fetching transactions:", txError);
-        }
+        });
+        setPendingCounts(counts);
       }
     } catch (error) {
       console.error("Error fetching events:", error);
