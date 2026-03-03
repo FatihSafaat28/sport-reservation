@@ -7,22 +7,8 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import EditEventDialog from "./EditEventDialog";
 import TransactionDialog from "./TransactionDialog";
+import { TransactionDetail } from "@/lib/interface/transactiondetail";
 
-interface Transaction {
-  id: string;
-  total_amount: number;
-  invoice_id: string;
-  proof_payment_url?: string;
-  status: string;
-  order_date: string;
-  user: {
-    name: string;
-    email: string;
-  };
-  transaction_items: {
-    sport_activity_id: number;
-  };
-}
 
 export default function EventDetailPage() {
   const router = useRouter();
@@ -36,8 +22,8 @@ export default function EventDetailPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Transaction/Participant state
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [transactions, setTransactions] = useState<TransactionDetail[]>([]);
+  const [selectedTransaction, setSelectedTransaction] = useState<TransactionDetail | null>(null);
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
 
   const token = typeof window !== "undefined" ? sessionStorage.getItem("token") : null;
@@ -66,7 +52,7 @@ export default function EventDetailPage() {
       if (!data.error) {
         // Filter transactions for this activity
         const filtered = (data.result || []).filter(
-          (t: Transaction) => t.transaction_items?.sport_activity_id === Number(slug)
+          (t: TransactionDetail) => t.transaction_items?.sport_activity_id === Number(slug)
         );
         setTransactions(filtered);
       }
@@ -315,7 +301,7 @@ export default function EventDetailPage() {
                       {tx.user?.name?.charAt(0)?.toUpperCase() || "?"}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">{tx.user?.name || "Unknown"}</p>
+                      <p className="font-medium text-gray-900 text-sm">{tx.user?.name || "User ID : " + tx.user_id}</p>
                       <p className="text-xs text-gray-500">{tx.user?.email || ""}</p>
                     </div>
                   </div>

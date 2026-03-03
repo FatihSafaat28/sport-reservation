@@ -137,7 +137,7 @@ export default function ManageTransactionPage() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-3 px-3 text-gray-500 font-medium">Invoice</th>
-                  <th className="text-left py-3 px-3 text-gray-500 font-medium hidden sm:table-cell">User</th>
+                  <th className="text-left py-3 px-3 text-gray-500 font-medium hidden sm:table-cell">User ID</th>
                   <th className="text-left py-3 px-3 text-gray-500 font-medium hidden lg:table-cell">Event</th>
                   <th className="text-left py-3 px-3 text-gray-500 font-medium hidden sm:table-cell">Amount</th>
                   <th className="text-left py-3 px-3 text-gray-500 font-medium hidden md:table-cell">Date</th>
@@ -158,7 +158,7 @@ export default function ManageTransactionPage() {
                     </td>
                     <td className="py-3 px-3 hidden sm:table-cell">
                       <div>
-                        <p className="font-medium text-gray-900 text-sm">{tx.user?.name || "-"}</p>
+                        <p className="font-medium text-gray-900 text-sm">{tx.user?.name || tx.user_id}</p>
                         <p className="text-xs text-gray-400">{tx.user?.email || ""}</p>
                       </div>
                     </td>

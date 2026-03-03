@@ -2,27 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/lib/config";
-
-interface TransactionBase {
-  id: string;
-  total_amount: number;
-  invoice_id: string;
-  proof_payment_url?: string;
-  status: string;
-  order_date: string;
-  user: {
-    name: string;
-    email: string;
-  };
-}
-
-interface TransactionDetail extends TransactionBase {
-  payment_method?: string;
-  expired_at?: string;
-}
+import { TransactionDetail } from "@/lib/interface/transactiondetail";
 
 interface TransactionDialogProps {
-  transaction: TransactionBase;
+  transaction: TransactionDetail;
   token: string;
   onClose: () => void;
   onStatusUpdated: () => void;
@@ -135,7 +118,7 @@ export default function TransactionDialog({ transaction, token, onClose, onStatu
                 {tx.user?.name?.charAt(0)?.toUpperCase() || "?"}
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{tx.user?.name || "Unknown"}</p>
+                <p className="font-semibold text-gray-900">{tx.user?.name || "User ID : " + tx.user_id}</p>
                 <p className="text-sm text-gray-500">{tx.user?.email || ""}</p>
               </div>
             </div>
