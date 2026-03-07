@@ -196,6 +196,10 @@ export default function TransactionDetailPage() {
               <span className="font-medium text-gray-900">{transaction.invoice_id}</span>
             </div>
             <div className="flex justify-between py-2 border-b border-gray-100">
+              <span className="text-gray-500">Name</span>
+              <span className="font-medium text-gray-900">{transaction.username}</span>
+            </div>
+            <div className="flex justify-between py-2 border-b border-gray-100">
               <span className="text-gray-500">Total Amount</span>
               <span className="font-semibold text-blue-600">{formatPrice(transaction.total_amount)}</span>
             </div>

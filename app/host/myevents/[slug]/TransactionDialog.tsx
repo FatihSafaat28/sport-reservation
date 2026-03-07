@@ -115,11 +115,10 @@ export default function TransactionDialog({ transaction, token, onClose, onStatu
             {/* User Info */}
             <div className="flex items-center gap-3 mb-2">
               <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-lg">
-                {tx.user?.name?.charAt(0)?.toUpperCase() || "?"}
+                {tx.username.charAt(0)?.toUpperCase() || "?"}
               </div>
               <div>
-                <p className="font-semibold text-gray-900">{tx.user?.name || "User ID : " + tx.user_id}</p>
-                <p className="text-sm text-gray-500">{tx.user?.email || ""}</p>
+                <p className="font-semibold text-gray-900">{tx.username}</p>
               </div>
             </div>
 

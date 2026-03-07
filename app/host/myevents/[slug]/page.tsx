@@ -278,7 +278,7 @@ export default function EventDetailPage() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-6 md:p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">
-            User ({transactions.length})
+            User Transaction List ({transactions.length})
           </h2>
 
           {transactions.length === 0 ? (
@@ -298,11 +298,10 @@ export default function EventDetailPage() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-semibold text-sm">
-                      {tx.user?.name?.charAt(0)?.toUpperCase() || "?"}
+                      {tx.username.charAt(0)?.toUpperCase() || "?"}
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900 text-sm">{tx.user?.name || "User ID : " + tx.user_id}</p>
-                      <p className="text-xs text-gray-500">{tx.user?.email || ""}</p>
+                      <p className="font-medium text-gray-900 text-sm">{tx.username}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">

@@ -73,10 +73,8 @@ export default function ManageTransactionPage() {
     const q = search.toLowerCase();
     return (
       t.invoice_id?.toLowerCase().includes(q) ||
-      t.user?.name?.toLowerCase().includes(q) ||
-      t.user?.email?.toLowerCase().includes(q) ||
-      t.status?.toLowerCase().includes(q) ||
-      t.transaction_items?.sport_activities?.title?.toLowerCase().includes(q)
+      t.username.toLowerCase().includes(q) ||
+      t.status?.toLowerCase().includes(q)
     );
   });
 
@@ -137,7 +135,7 @@ export default function ManageTransactionPage() {
               <thead>
                 <tr className="border-b border-gray-200">
                   <th className="text-left py-3 px-3 text-gray-500 font-medium">Invoice</th>
-                  <th className="text-left py-3 px-3 text-gray-500 font-medium hidden sm:table-cell">User ID</th>
+                  <th className="text-left py-3 px-3 text-gray-500 font-medium hidden sm:table-cell">Name</th>
                   <th className="text-left py-3 px-3 text-gray-500 font-medium hidden lg:table-cell">Event</th>
                   <th className="text-left py-3 px-3 text-gray-500 font-medium hidden sm:table-cell">Amount</th>
                   <th className="text-left py-3 px-3 text-gray-500 font-medium hidden md:table-cell">Date</th>
@@ -158,7 +156,7 @@ export default function ManageTransactionPage() {
                     </td>
                     <td className="py-3 px-3 hidden sm:table-cell">
                       <div>
-                        <p className="font-medium text-gray-900 text-sm">{tx.user?.name || tx.user_id}</p>
+                        <p className="font-medium text-gray-900 text-sm">{tx.username}</p>
                         <p className="text-xs text-gray-400">{tx.user?.email || ""}</p>
                       </div>
                     </td>
