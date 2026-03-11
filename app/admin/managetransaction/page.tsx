@@ -40,7 +40,31 @@ export default function ManageTransactionPage() {
       });
       const data = await res.json();
       if (!data.error) {
-        const sorted = (data.result || []).sort(
+        const rawData: TransactionDetail[] = data.result || [];
+
+        // Auto-cancel expired pending transactions
+        const expiredPending = rawData.filter(
+          (t) =>
+            t.status === "pending" &&
+            !t.proof_payment_url &&
+            t.expired_date &&
+            new Date(t.expired_date) < new Date()
+        );
+
+        if (expiredPending.length > 0) {
+          await Promise.all(
+            expiredPending.map((t) =>
+              fetch(`${API_BASE_URL}/transaction/cancel/${t.id}`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+              })
+            )
+          );
+          // Re-fetch to get updated statuses
+          return fetchTransactions(token);
+        }
+
+        const sorted = rawData.sort(
           (a: TransactionDetail, b: TransactionDetail) =>
             new Date(b.order_date).getTime() - new Date(a.order_date).getTime()
         );

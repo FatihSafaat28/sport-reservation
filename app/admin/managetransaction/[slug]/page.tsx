@@ -262,21 +262,28 @@ export default function TransactionDetailPage() {
 
           {/* Action Buttons */}
           {!isFinalStatus(transaction.status) && (
-            <div className="pt-4 border-t border-gray-100 flex flex-col sm:flex-row gap-3">
-              <button
-                onClick={handleUpdateStatus}
-                disabled={updating}
-                className="flex-1 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed text-center"
-              >
-                {updating ? "Updating..." : "✓ Approve (Success)"}
-              </button>
-              <button
-                onClick={handleCancelTransaction}
-                disabled={updating}
-                className="flex-1 px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors text-sm border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed text-center"
-              >
-                {updating ? "Updating..." : "✗ Cancel Transaction"}
-              </button>
+            <div className="pt-4 border-t border-gray-100">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleUpdateStatus}
+                  disabled={updating || !transaction.proof_payment_url}
+                  className="flex-1 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed text-center cursor-pointer"
+                >
+                  {updating ? "Updating..." : "✓ Approve (Success)"}
+                </button>
+                <button
+                  onClick={handleCancelTransaction}
+                  disabled={updating}
+                  className="flex-1 px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors text-sm border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-center"
+                >
+                  {updating ? "Updating..." : "✗ Cancel Transaction"}
+                </button>
+              </div>
+              {!transaction.proof_payment_url && (
+                <p className="mt-3 text-xs text-center text-red-500 font-medium">
+                  Payment proof is required to approve this transaction.
+                </p>
+              )}
             </div>
           )}
         </div>
