@@ -26,7 +26,13 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
   const [address, setAddress] = useState(activity.address);
   const [mapUrl, setMapUrl] = useState(activity.map_url || "");
   const [slot, setSlot] = useState(String(activity.slot));
-  const [price, setPrice] = useState(String(activity.price));
+  const [price, setPrice] = useState("");
+
+  useEffect(() => {
+    if (activity.price) {
+      setPrice(formatNumber(String(activity.price)));
+    }
+  }, [activity.price]);
   const [activityDate, setActivityDate] = useState(activity.activity_date?.split("T")[0] || "");
   const [startTime, setStartTime] = useState(activity.start_time || "");
   const [endTime, setEndTime] = useState(activity.end_time || "");
@@ -108,7 +114,7 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
       title,
       description,
       slot: Number(slot),
-      price: Number(price),
+      price: Number(price.toString().replace(/\./g, "")),
       address,
       activity_date: activityDate,
       start_time: startTime.slice(0, 5),
@@ -143,6 +149,12 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
   const inputClass =
     "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white text-gray-900 text-sm";
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
+  
+  const formatNumber = (val: string) => {
+    if (!val) return "";
+    const res = val.replace(/\D/g, "");
+    return res.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -230,7 +242,7 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
             </div>
             <div>
               <label className={labelClass}>Price (IDR)</label>
-              <input type="number" min="0" className={inputClass} value={price} onChange={(e) => setPrice(e.target.value)} required />
+              <input type="text" className={inputClass} value={price} onChange={(e) => setPrice(formatNumber(e.target.value))} required />
             </div>
           </div>
 

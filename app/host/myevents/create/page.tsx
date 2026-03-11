@@ -106,7 +106,7 @@ export default function CreateEventPage() {
       title,
       description,
       slot: Number(slot),
-      price: Number(price),
+      price: Number(price.toString().replace(/\./g, "")),
       address,
       activity_date: activityDate,
       start_time: startTime,
@@ -141,6 +141,12 @@ export default function CreateEventPage() {
   const inputClass =
     "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white text-gray-900";
   const labelClass = "block text-sm font-medium text-gray-700 mb-1";
+  
+  const formatNumber = (val: string) => {
+    if (!val) return "";
+    const res = val.replace(/\D/g, "");
+    return res.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  };
 
   return (
     <div className="max-w-3xl mx-auto px-8 py-8">
@@ -327,12 +333,11 @@ export default function CreateEventPage() {
             <label htmlFor="price" className={labelClass}>Price (IDR)</label>
             <input
               id="price"
-              type="number"
-              min="0"
+              type="text"
               className={inputClass}
-              placeholder="e.g. 50000"
+              placeholder="e.g. 50.000"
               value={price}
-              onChange={(e) => setPrice(e.target.value)}
+              onChange={(e) => setPrice(formatNumber(e.target.value))}
               required
             />
           </div>

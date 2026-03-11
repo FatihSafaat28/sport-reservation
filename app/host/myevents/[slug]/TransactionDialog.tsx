@@ -166,11 +166,16 @@ export default function TransactionDialog({ transaction, token, onClose, onStatu
               <div className="pt-4 border-t border-gray-100">
                 <button
                   onClick={handleUpdateStatus}
-                  disabled={updating}
+                  disabled={updating || !tx.proof_payment_url}
                   className="w-full px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {updating ? "Updating..." : "Approve Transaction (Set to Success)"}
                 </button>
+                {!tx.proof_payment_url && (
+                  <p className="mt-2 text-xs text-center text-red-500 font-medium">
+                    Payment proof is required to approve this transaction.
+                  </p>
+                )}
               </div>
             )}
           </div>
