@@ -17,6 +17,7 @@ export default function LayoutWrapper({
   if (isAdminPage) {
     return <>{children}</>;
   }
+  // Admin page akan memiliki navbarnya sendiri.
 
   return (
     <>
@@ -25,4 +26,5 @@ export default function LayoutWrapper({
       {!isAuthPage && <Footer />}
     </>
   );
+  // Menghilangkan footer dari halaman authentication.
 }

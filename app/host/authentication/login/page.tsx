@@ -57,7 +57,24 @@ export default function HostLogin() {
           });
           const meResult = await meResponse.json();
           if (meResult.success && meResult.data) {
-            sessionStorage.setItem("role", meResult.data.role);
+            const userRole = meResult.data.role;
+            if (userRole !== "admin") {
+              // Not an admin, must logout
+              await fetch(`${API_BASE_URL}/logout`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${result.data.token}`,
+                },
+              });
+              sessionStorage.removeItem("token");
+              sessionStorage.removeItem("email");
+              sessionStorage.removeItem("name");
+              sessionStorage.removeItem("role");
+              alert("Login Gagal! Coba cek email / password mu!");
+              return;
+            }
+            sessionStorage.setItem("role", userRole);
           }
         } catch (err) {
           console.error("Error fetching user profile:", err);

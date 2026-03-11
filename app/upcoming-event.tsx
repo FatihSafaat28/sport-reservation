@@ -19,19 +19,21 @@ export default function UpcomingEvent() {
         }
         const result = await response.json();
         const activities: SportActivity[] = result.result.data;
+        console.log(activities)
         
         const now = new Date();
 
         const upcoming = activities
-          .filter((event) => new Date(event.activity_date) > now) // Filter future events
+          .filter((event) => new Date(event.activity_date) > now)
           .sort(
             (a, b) =>
               new Date(a.activity_date).getTime() -
               new Date(b.activity_date).getTime(),
-          ) // Sort nearest first
-          .slice(0, 4); // Take top 4
+          )
+          .slice(0, 4);
 
         setEvents(upcoming);
+        // Filter event yang berlum terlaksana, lalu sorting, dan ambil 4 terdekat.
       } catch (error) {
         console.error("Error fetching events:", error);
       } finally {
