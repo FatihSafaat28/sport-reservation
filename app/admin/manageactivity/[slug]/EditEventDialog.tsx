@@ -75,7 +75,7 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
       setProvinces(json.result);
       if (activity.city?.province?.province_name) {
         const found = json.result.find(
-          (p: Province) => p.province_name === activity.city.province.province_name
+          (p: Province) => p.province_name === activity.city?.province?.province_name
         );
         if (found) setProvinceId(String(found.province_id));
       }
@@ -94,7 +94,7 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
       setCities(data);
       if (isInitialLoad.current && activity.city?.city_name_full) {
         const found = data.find(
-          (c: City) => c.city_name_full === activity.city.city_name_full
+          (c: City) => c.city_name_full === activity.city?.city_name_full
         );
         if (found) setCityId(String(found.city_id));
         isInitialLoad.current = false;

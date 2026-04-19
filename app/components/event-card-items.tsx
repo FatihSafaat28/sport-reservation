@@ -46,8 +46,8 @@ export default function EventCardItems({ event }: EventCardItemsProps) {
                   />
                 </svg>
                 <span className="line-clamp-1 flex flex-wrap">
-                  {event.address}, {event.city.city_name_full},{" "}
-                  {event.city.province.province_name}
+                  {event.address}, {event.city?.city_name_full || ""},{" "}
+                  {event.city?.province?.province_name || ""}
                 </span>
               </p>
               <p className="text-sm text-gray-500 flex items-center gap-1.5">
