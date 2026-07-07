@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { API_BASE_URL } from "@/lib/config";
 import { toast } from "sonner";
@@ -9,6 +9,20 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState("");
   const [isMobile, setIsMobile] = useState(false);
@@ -179,7 +193,7 @@ export default function Navbar() {
                     className="text-gray-300 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 block"
                     onClick={() => setIsOpen(false)}
                   >
-                    Transaction
+                    My Transaction
                   </Link>
                 )}
                 <button
@@ -254,54 +268,67 @@ export default function Navbar() {
             {/* Auth Section */}
             <div className="flex items-center gap-3">
               {isLoggedIn ? (
-                <div className="relative">
+                <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors focus:outline-none"
+                    className="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-800 px-3 py-2 rounded-md text-sm font-medium transition-all duration-200 cursor-pointer focus:outline-none"
                   >
                     <span className="text-sm">Hi, <span className="font-semibold text-white">{userName}</span></span>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={1.5}
+                      stroke="currentColor"
+                      className={`w-4 h-4 transition-transform duration-200 ${
+                        isDropdownOpen ? "rotate-180" : "rotate-0"
+                      }`}
+                    >
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
                     </svg>
                   </button>
 
-                  {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700 text-center">
+                  <div
+                    className={`absolute right-0 mt-2 w-48 bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-700 text-center transition-all duration-200 origin-top-right ${
+                      isDropdownOpen
+                        ? "opacity-100 scale-100 translate-y-0 pointer-events-auto"
+                        : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+                    }`}
+                  >
+                    <Link
+                      href={userRole === "admin" ? "/host/profile" : "/profile"}
+                      className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                      onClick={() => setIsDropdownOpen(false)}
+                    >
+                      Profile
+                    </Link>
+                    {userRole === "admin" ? (
                       <Link
-                        href={userRole === "admin" ? "/host/profile" : "/profile"}
+                        href="/host/myevents"
                         className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
                         onClick={() => setIsDropdownOpen(false)}
                       >
-                        Profile
+                        My Events
                       </Link>
-                      {userRole === "admin" ? (
-                        <Link
-                          href="/host/myevents"
-                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
-                          onClick={() => setIsDropdownOpen(false)}
-                        >
-                          My Events
-                        </Link>
-                      ) : (
-                        <Link
-                          href="/profile/transaction"
-                          className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
-                          onClick={() => setIsDropdownOpen(false)}
-                        >
-                          Transaction
-                        </Link>
-                      )}
-                      <button
-                        onClick={() => {
-                          handleLogout();
-                          setIsDropdownOpen(false);
-                        }}
-                        className="block w-full text-center px-4 py-2 text-sm text-red-500 hover:bg-gray-700 hover:text-red-400"
+                    ) : (
+                      <Link
+                        href="/profile/transaction"
+                        className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-700 hover:text-white"
+                        onClick={() => setIsDropdownOpen(false)}
                       >
-                        Logout
-                      </button>
-                    </div>
-                  )}
+                        My Transaction
+                      </Link>
+                    )}
+                    <button
+                      onClick={() => {
+                        handleLogout();
+                        setIsDropdownOpen(false);
+                      }}
+                      className="block w-full text-center px-4 py-2 text-sm text-red-500 hover:bg-gray-700 hover:text-red-400"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <>

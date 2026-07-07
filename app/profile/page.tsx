@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { User } from "@/lib/interface/user";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import Link from "next/link";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -77,17 +79,19 @@ export default function ProfilePage() {
 
       const result = await response.json();
       if (!result.error) {
-        alert("Profile updated successfully!");
+        toast.success("Profile updated successfully!");
         setUser({ ...user, name: editName, phone_number: editPhone });
         setIsEditing(false);
         sessionStorage.setItem("name", editName);
+        // Jeda agar user melihat toast sebelum halaman dimuat ulang
+        await new Promise((resolve) => setTimeout(resolve, 800));
         window.location.reload(); 
       } else {
-        alert(result.message || "Failed to update profile");
+        toast.error(result.message || "Failed to update profile");
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("An error occurred");
+      toast.error("An error occurred");
     }
   };
 
@@ -96,7 +100,7 @@ export default function ProfilePage() {
     if (!user) return;
     
     if (newPassword !== confirmPassword) {
-      alert("Passwords do not match!");
+      toast.error("Passwords do not match!");
       return;
     }
 
@@ -120,16 +124,16 @@ export default function ProfilePage() {
 
       const result = await response.json();
       if (!result.error) {
-        alert("Password changed successfully!");
+        toast.success("Password changed successfully!");
         setIsChangingPassword(false);
         setNewPassword("");
         setConfirmPassword("");
       } else {
-        alert(result.message || "Failed to change password");
+        toast.error(result.message || "Failed to change password");
       }
     } catch (error) {
         console.error("Error changing password:", error);
-        alert("An error occurred");
+        toast.error("An error occurred");
     }
   };
 
@@ -202,6 +206,19 @@ export default function ProfilePage() {
           </p>
         </div>
 
+        {/* Quick Links */}
+        <div className="flex gap-3">
+          <Link
+            href="/profile/transaction"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 font-medium rounded-lg border border-blue-200 transition-colors text-sm"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+            </svg>
+            My Transaction
+          </Link>
+        </div>
+
         {/* Profile Information Card */}
         <div className="bg-white sm:rounded-2xl border border-gray-200 shadow-sm">
           <div className="px-4 py-5 sm:p-6">
@@ -230,7 +247,7 @@ export default function ProfilePage() {
                 <div className="mt-4">
                   <button
                     onClick={() => setIsEditing(true)}
-                    className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                   >
                     Edit Profile
                   </button>
@@ -315,7 +332,7 @@ export default function ProfilePage() {
             {!isChangingPassword ? (
                  <button
                  onClick={() => setIsChangingPassword(true)}
-                 className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                 className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors"
                >
                  Change Password
                </button>
