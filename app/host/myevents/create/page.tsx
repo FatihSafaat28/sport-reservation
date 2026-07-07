@@ -7,6 +7,9 @@ import { Province } from "@/lib/interface/province";
 import { City } from "@/lib/interface/city";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { encodeEventDescription } from "@/lib/utils/eventHelper";
+import { PaymentMethod } from "@/lib/interface/paymentmethod";
+import { toast } from "sonner";
 
 export default function CreateEventPage() {
   const router = useRouter();
@@ -26,10 +29,17 @@ export default function CreateEventPage() {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
 
+  // Host Payment & Contact details state
+  const [phone, setPhone] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [bankAccount, setBankAccount] = useState("");
+  const [accountHolder, setAccountHolder] = useState("");
+
   // Options
   const [categories, setCategories] = useState<SportCategory[]>([]);
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [cities, setCities] = useState<City[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [loadingCities, setLoadingCities] = useState(false);
 
   useEffect(() => {
@@ -40,6 +50,7 @@ export default function CreateEventPage() {
     }
     fetchCategories();
     fetchProvinces();
+    fetchPaymentMethods();
   }, [router]);
 
   useEffect(() => {
@@ -73,6 +84,17 @@ export default function CreateEventPage() {
     }
   };
 
+  const fetchPaymentMethods = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/payment-methods`);
+      if (!res.ok) throw new Error("Failed to fetch payment methods");
+      const json = await res.json();
+      setPaymentMethods(json.result);
+    } catch (err) {
+      console.error("Error fetching payment methods:", err);
+    }
+  };
+
   const fetchCities = async (provId: string) => {
     setLoadingCities(true);
     try {
@@ -100,11 +122,18 @@ export default function CreateEventPage() {
       return;
     }
 
+    const finalDescription = encodeEventDescription(description, {
+      phone,
+      bank_name: bankName,
+      bank_account: bankAccount,
+      account_holder: accountHolder,
+    });
+
     const payload = {
       sport_category_id: Number(sportCategoryId),
       city_id: Number(cityId),
       title,
-      description,
+      description: finalDescription,
       slot: Number(slot),
       price: Number(price.toString().replace(/\./g, "")),
       address,
@@ -125,14 +154,14 @@ export default function CreateEventPage() {
       });
       const result = await res.json();
       if (!result.error) {
-        alert("Event berhasil dibuat!");
+        toast.success("Event berhasil dibuat!");
         router.push("/host/myevents");
       } else {
-        alert(result.message || "Gagal membuat event. Coba lagi!");
+        toast.error(result.message || "Gagal membuat event. Coba lagi!");
       }
     } catch (error) {
       console.error("Error creating event:", error);
-      alert("Terjadi kesalahan. Coba lagi!");
+      toast.error("Terjadi kesalahan. Coba lagi!");
     } finally {
       setLoading(false);
     }
@@ -191,6 +220,71 @@ export default function CreateEventPage() {
             onChange={(e) => setDescription(e.target.value)}
             required
           />
+        </div>
+
+        {/* Host Contact & Payment Details */}
+        <div className="bg-gray-50 p-6 rounded-2xl border border-gray-200 space-y-4">
+          <h3 className="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2">
+            Kontak Host & Informasi Pembayaran (Opsional)
+          </h3>
+          <p className="text-xs text-gray-500">
+            Informasi di bawah ini akan digunakan oleh peserta untuk melakukan transfer pembayaran mabar langsung ke rekening Anda.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="phone" className={labelClass}>Nomor Telepon Host (WhatsApp)</label>
+              <input
+                id="phone"
+                type="text"
+                className={inputClass}
+                placeholder="Contoh: 081234567890"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+              />
+            </div>
+            <div>
+              <label htmlFor="bankName" className={labelClass}>Nama Bank</label>
+              <select
+                id="bankName"
+                className={`${inputClass} cursor-pointer`}
+                value={bankName}
+                onChange={(e) => setBankName(e.target.value)}
+              >
+                <option value="">Pilih Bank</option>
+                {paymentMethods.map((method) => (
+                  <option key={method.id} value={method.name}>
+                    {method.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="bankAccount" className={labelClass}>Nomor Rekening</label>
+              <input
+                id="bankAccount"
+                type="text"
+                className={inputClass}
+                placeholder="Contoh: 123456789"
+                value={bankAccount}
+                onChange={(e) => setBankAccount(e.target.value.replace(/\D/g, ""))}
+              />
+            </div>
+            <div>
+              <label htmlFor="accountHolder" className={labelClass}>Nama Pemilik Rekening</label>
+              <input
+                id="accountHolder"
+                type="text"
+                className={inputClass}
+                placeholder="Nama sesuai buku tabungan"
+                value={accountHolder}
+                onChange={(e) => setAccountHolder(e.target.value)}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Category */}

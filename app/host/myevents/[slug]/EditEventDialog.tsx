@@ -6,6 +6,9 @@ import { SportActivity } from "@/lib/interface/sportactivity";
 import { SportCategory } from "@/lib/interface/sportcategory";
 import { Province } from "@/lib/interface/province";
 import { City } from "@/lib/interface/city";
+import { parseEventDescription, encodeEventDescription } from "@/lib/utils/eventHelper";
+import { PaymentMethod } from "@/lib/interface/paymentmethod";
+import { toast } from "sonner";
 
 interface EditEventDialogProps {
   activity: SportActivity;
@@ -17,9 +20,16 @@ interface EditEventDialogProps {
 export default function EditEventDialog({ activity, token, onClose, onUpdated }: EditEventDialogProps) {
   const [loading, setLoading] = useState(false);
 
+  // Parse description metadata
+  const parsedData = parseEventDescription(activity.description);
+
   // Form state
   const [title, setTitle] = useState(activity.title);
-  const [description, setDescription] = useState(activity.description);
+  const [description, setDescription] = useState(parsedData.mainDescription);
+  const [phone, setPhone] = useState(parsedData.paymentInfo?.phone || "");
+  const [bankName, setBankName] = useState(parsedData.paymentInfo?.bank_name || "");
+  const [bankAccount, setBankAccount] = useState(parsedData.paymentInfo?.bank_account || "");
+  const [accountHolder, setAccountHolder] = useState(parsedData.paymentInfo?.account_holder || "");
   const [sportCategoryId, setSportCategoryId] = useState("");
   const [provinceId, setProvinceId] = useState("");
   const [cityId, setCityId] = useState("");
@@ -41,11 +51,13 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
   const [categories, setCategories] = useState<SportCategory[]>([]);
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [cities, setCities] = useState<City[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const isInitialLoad = useRef(true);
 
   useEffect(() => {
     fetchCategories();
     fetchProvinces();
+    fetchPaymentMethods();
   }, []);
 
   useEffect(() => {
@@ -84,6 +96,18 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
     }
   };
 
+  const fetchPaymentMethods = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/payment-methods`);
+      const json = await res.json();
+      if (!json.error) {
+        setPaymentMethods(json.result);
+      }
+    } catch (err) {
+      console.error("Error fetching payment methods:", err);
+    }
+  };
+
   const fetchCities = async (provId: string) => {
     try {
       const res = await fetch(`${API_BASE_URL}/location/cities/${provId}?is_paginate=false`);
@@ -108,11 +132,18 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
     e.preventDefault();
     setLoading(true);
 
+    const finalDescription = encodeEventDescription(description, {
+      phone,
+      bank_name: bankName,
+      bank_account: bankAccount,
+      account_holder: accountHolder,
+    });
+
     const payload = {
       sport_category_id: Number(sportCategoryId),
       city_id: Number(cityId),
       title,
-      description,
+      description: finalDescription,
       slot: Number(slot),
       price: Number(price.toString().replace(/\./g, "")),
       address,
@@ -133,14 +164,14 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
       });
       const result = await res.json();
       if (!result.error) {
-        alert("Event berhasil diupdate!");
+        toast.success("Event berhasil diupdate!");
         onUpdated();
       } else {
-        alert(result.message || "Gagal mengupdate event.");
+        toast.error(result.message || "Gagal mengupdate event.");
       }
     } catch (error) {
       console.error("Error updating event:", error);
-      alert("Terjadi kesalahan.");
+      toast.error("Terjadi kesalahan.");
     } finally {
       setLoading(false);
     }
@@ -177,6 +208,64 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
           <div>
             <label className={labelClass}>Description</label>
             <textarea className={`${inputClass} min-h-[90px] resize-y`} value={description} onChange={(e) => setDescription(e.target.value)} required />
+          </div>
+
+          {/* Host Contact & Payment Details */}
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-3">
+            <h3 className="text-sm font-bold text-gray-800 border-b border-gray-200 pb-1.5">
+              Kontak Host & Informasi Pembayaran (Opsional)
+            </h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Nomor Telepon Host</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  placeholder="e.g. 081234567890"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Nama Bank</label>
+                <select
+                  className={`${inputClass} cursor-pointer`}
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                >
+                  <option value="">Pilih Bank</option>
+                  {paymentMethods.map((method) => (
+                    <option key={method.id} value={method.name}>
+                      {method.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Nomor Rekening</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  placeholder="e.g. 123456789"
+                  value={bankAccount}
+                  onChange={(e) => setBankAccount(e.target.value.replace(/\D/g, ""))}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Nama Pemilik Rekening</label>
+                <input
+                  type="text"
+                  className={inputClass}
+                  placeholder="Nama pemilik rekening"
+                  value={accountHolder}
+                  onChange={(e) => setAccountHolder(e.target.value)}
+                />
+              </div>
+            </div>
           </div>
 
           <div>

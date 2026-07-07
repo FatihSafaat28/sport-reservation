@@ -5,6 +5,8 @@ import { API_BASE_URL } from '@/lib/config';
 import { SportActivity } from '@/lib/interface/sportactivity';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { parseEventDescription } from '@/lib/utils/eventHelper';
+import { toast } from 'sonner';
 
 interface BookingDialogProps {
   activity: SportActivity;
@@ -27,6 +29,8 @@ export default function BookingDialog({ activity, className }: BookingDialogProp
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
+  const { paymentInfo } = parseEventDescription(activity.description);
+
   useEffect(() => {
     if (isOpen && paymentMethods.length === 0) {
       fetchPaymentMethods();
@@ -39,7 +43,39 @@ export default function BookingDialog({ activity, className }: BookingDialogProp
       const response = await fetch(`${API_BASE_URL}/payment-methods`);
       const data = await response.json();
       if (response.ok) {
-        setPaymentMethods(data.result);
+        const methods = data.result as PaymentMethod[];
+
+        // If host has payment info, override the payment methods
+        if (paymentInfo && paymentInfo.bank_name) {
+          const matched = methods.find(
+            (m) => m.name.toLowerCase() === paymentInfo.bank_name.toLowerCase()
+          );
+
+          if (matched) {
+            const overriddenMethod: PaymentMethod = {
+              ...matched,
+              virtual_account_name: paymentInfo.account_holder,
+              virtual_account_number: paymentInfo.bank_account,
+            };
+            setPaymentMethods([overriddenMethod]);
+            setSelectedPaymentId(overriddenMethod.id);
+          } else if (methods.length > 0) {
+            // Fallback if host bank is not in system payment methods
+            const fallbackMethod: PaymentMethod = {
+              id: methods[0].id,
+              name: paymentInfo.bank_name,
+              image_url: "",
+              virtual_account_name: paymentInfo.account_holder,
+              virtual_account_number: paymentInfo.bank_account,
+            };
+            setPaymentMethods([fallbackMethod]);
+            setSelectedPaymentId(fallbackMethod.id);
+          } else {
+            setPaymentMethods([]);
+          }
+        } else {
+          setPaymentMethods(methods);
+        }
       }
     } catch (error) {
       console.error('Failed to fetch payment methods', error);
@@ -51,7 +87,7 @@ export default function BookingDialog({ activity, className }: BookingDialogProp
   const handleBookClick = () => {
     const token = sessionStorage.getItem('token');
     if (!token) {
-      alert("Please login first to book an activity.");
+      toast.warning("Please login first to book an activity.");
       router.push('/authentication/login');
       return;
     }
@@ -60,7 +96,7 @@ export default function BookingDialog({ activity, className }: BookingDialogProp
 
   const handleConfirmBooking = async () => {
     if (!selectedPaymentId) {
-      alert("Please select a payment method.");
+      toast.warning("Please select a payment method.");
       return;
     }
 
@@ -84,15 +120,15 @@ export default function BookingDialog({ activity, className }: BookingDialogProp
       const result = await response.json();
 
       if (!result.error) {
-        alert("Booking successful!");
+        toast.success("Booking successful!");
         setIsOpen(false);
         router.push(`/profile/transaction/${result.result.id}`);
       } else {
-        alert(result.message || "Booking failed. Please try again.");
+        toast.error(result.message || "Booking failed. Please try again.");
       }
     } catch (error) {
       console.error("Booking error:", error);
-      alert("An error occurred during booking.");
+      toast.error("An error occurred during booking.");
     } finally {
       setIsSubmitting(false);
     }

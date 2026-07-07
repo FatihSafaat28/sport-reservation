@@ -5,15 +5,28 @@ import { API_BASE_URL } from "@/lib/config";
 import { useRouter } from "next/navigation";
 import { SportActivity } from "@/lib/interface/sportactivity";
 import { TransactionDetail } from "@/lib/interface/transactiondetail";
-import { PaymentMethod } from "@/lib/interface/paymentmethod";
+import { parseEventDescription } from "@/lib/utils/eventHelper";
+import { toast } from "sonner";
+
+interface ExtendedPaymentMethod {
+  id: number;
+  name: string;
+  description: string;
+  virtual_account_number?: string;
+  virtual_account_name?: string;
+}
 
 export default function TransactionDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const router = useRouter();
   const { slug } = use(params);
   const [transaction, setTransaction] = useState<TransactionDetail | null>(null);
   const [activity, setActivity] = useState<SportActivity | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<ExtendedPaymentMethod | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const { mainDescription, paymentInfo } = activity 
+    ? parseEventDescription(activity.description) 
+    : { mainDescription: "", paymentInfo: null };
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -93,7 +106,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
         if (!result.error) {
             const data = result.result
             if (Array.isArray(data)) {
-                const method = data.find((pm: any) => pm.id == id);
+                const method = data.find((pm: ExtendedPaymentMethod) => pm.id == id);
                 if (method) {
                     setPaymentMethod(method);
                 }
@@ -110,13 +123,13 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
     if (selected) {
       // Validate image type
       if (!selected.type.startsWith("image/")) {
-        alert("Only image files are allowed (JPG, PNG, etc.)");
+        toast.warning("Only image files are allowed (JPG, PNG, etc.)");
         e.target.value = "";
         return;
       }
       // Validate max size 512KB
       if (selected.size > 512 * 1024) {
-        alert(`File size (${(selected.size / 1024).toFixed(0)} KB) exceeds the 512 KB limit. Please choose a smaller image.`);
+        toast.warning(`File size (${(selected.size / 1024).toFixed(0)} KB) exceeds the 512 KB limit. Please choose a smaller image.`);
         e.target.value = "";
         return;
       }
@@ -127,7 +140,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
 
   const handleUploadProof = async () => {
     if (!proofFile) {
-      alert("Please select an image file first");
+      toast.warning("Please select an image file first");
       return;
     }
 
@@ -148,7 +161,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
 
       const uploadResult = await uploadRes.json();
       if (uploadResult.error) {
-        alert(uploadResult.message || "Failed to upload image");
+        toast.error(uploadResult.message || "Failed to upload image");
         return;
       }
 
@@ -168,16 +181,16 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
 
       const result = await response.json();
       if (!result.error) {
-        alert("Proof of payment updated successfully!");
+        toast.success("Proof of payment updated successfully!");
         fetchTransactionDetail();
         setProofFile(null);
         setProofPreview(null);
       } else {
-        alert(result.message || "Failed to update proof of payment");
+        toast.error(result.message || "Failed to update proof of payment");
       }
     } catch (error) {
       console.error("Error updating proof of payment:", error);
-      alert("An error occurred");
+      toast.error("An error occurred");
     } finally {
       setIsUploading(false);
     }
@@ -328,11 +341,11 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
               </p>
             </div>
             <div>
-                {paymentMethod && (
+                {(paymentInfo?.bank_name || paymentMethod) && (
                     <div className="mb-2">
                         <p className="text-sm font-medium text-gray-500">Payment Method</p>
                         <div className="flex items-center gap-2 mt-1">
-                            <p className="text-sm text-gray-900">{paymentMethod.name}</p>
+                            <p className="text-sm text-gray-900">{paymentInfo?.bank_name || paymentMethod?.name}</p>
                         </div>
                     </div>
                 )}
@@ -378,7 +391,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
                   <div className="flex-1">
                     <h4 className="text-sm font-medium text-gray-900 mb-2">Description</h4>
                     <p className="text-sm text-gray-600 whitespace-pre-line leading-relaxed">
-                      {activity.description}
+                      {mainDescription}
                     </p>
                   </div>
 
@@ -431,6 +444,74 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
              <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm text-center text-gray-500">
                 {transaction.transaction_items?.sport_activity_id ? 'Loading Activity Details...' : 'Activity details not available'}
              </div>
+        )}
+
+        {/* Payment Instructions */}
+        {transaction.status === 'pending' && (
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6 space-y-4 shadow-sm">
+            <h2 className="text-lg font-bold text-blue-900">Payment Instructions</h2>
+            <p className="text-sm text-blue-700 leading-relaxed">
+              Silakan lakukan transfer sesuai detail rekening host di bawah ini, lalu unggah bukti transfer di bagian bawah halaman ini.
+            </p>
+            
+            <div className="bg-white rounded-xl border border-blue-100 p-4 space-y-3">
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100 text-sm">
+                <span className="text-xs font-semibold text-gray-500 uppercase">Bank Tujuan</span>
+                <span className="font-bold text-gray-900">{paymentInfo?.bank_name || paymentMethod?.name || 'N/A'}</span>
+              </div>
+              
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100 text-sm">
+                <span className="text-xs font-semibold text-gray-500 uppercase">Nomor Rekening</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-gray-900">
+                    {paymentInfo?.bank_account || paymentMethod?.virtual_account_number || 'N/A'}
+                  </span>
+                  {(paymentInfo?.bank_account || paymentMethod?.virtual_account_number) && (
+                    <button
+                      onClick={() => {
+                        const accNum = paymentInfo?.bank_account || paymentMethod?.virtual_account_number;
+                        if (accNum) {
+                          navigator.clipboard.writeText(accNum);
+                          toast.success('Nomor rekening berhasil disalin!');
+                        }
+                      }}
+                      className="p-1 hover:bg-gray-100 rounded text-blue-600 transition-colors"
+                      title="Salin Nomor Rekening"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center pb-2 border-b border-gray-100 text-sm">
+                <span className="text-xs font-semibold text-gray-500 uppercase">Nama Penerima</span>
+                <span className="font-semibold text-gray-900">
+                  {paymentInfo?.account_holder || paymentMethod?.virtual_account_name || 'N/A'}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-xs font-semibold text-gray-500 uppercase">Total Transfer</span>
+                <span className="font-bold text-blue-600">IDR {transaction.total_amount.toLocaleString()}</span>
+              </div>
+            </div>
+            
+            {paymentInfo?.phone && (
+              <div className="text-center">
+                <a
+                  href={`https://wa.me/${paymentInfo.phone.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline"
+                >
+                  Butuh bantuan? Hubungi Host via WhatsApp
+                </a>
+              </div>
+            )}
+          </div>
         )}
 
         {/* SECTION 3: Payment Proof */}

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { TransactionDetail } from "@/lib/interface/transactiondetail";
+import { toast } from "sonner";
 
 interface TransactionDialogProps {
   transaction: TransactionDetail;
@@ -50,14 +51,14 @@ export default function TransactionDialog({ transaction, token, onClose, onStatu
       const data = await res.json();
       console.log(data)
       if (!data.error) {
-        alert("Status transaksi berhasil diupdate!");
+        toast.success("Status transaksi berhasil diupdate!");
         onStatusUpdated();
       } else {
-        alert(data.message || "Gagal mengupdate status.");
+        toast.error(data.message || "Gagal mengupdate status.");
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      alert("Terjadi kesalahan.");
+      toast.error("Terjadi kesalahan.");
     } finally {
       setUpdating(false);
     }

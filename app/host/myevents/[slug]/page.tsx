@@ -8,6 +8,8 @@ import Link from "next/link";
 import EditEventDialog from "./EditEventDialog";
 import TransactionDialog from "./TransactionDialog";
 import { TransactionDetail } from "@/lib/interface/transactiondetail";
+import { parseEventDescription } from "@/lib/utils/eventHelper";
+import { toast } from "sonner";
 
 
 export default function EventDetailPage() {
@@ -20,6 +22,10 @@ export default function EventDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const { mainDescription, paymentInfo } = activity
+    ? parseEventDescription(activity.description)
+    : { mainDescription: "", paymentInfo: null };
 
   // Transaction/Participant state
   const [transactions, setTransactions] = useState<TransactionDetail[]>([]);
@@ -80,14 +86,14 @@ export default function EventDetailPage() {
       });
       const data = await res.json();
       if (!data.error) {
-        alert("Event berhasil dihapus!");
+        toast.success("Event berhasil dihapus!");
         router.push("/host/myevents");
       } else {
-        alert(data.message || "Gagal menghapus event.");
+        toast.error(data.message || "Gagal menghapus event.");
       }
     } catch (error) {
       console.error("Error deleting event:", error);
-      alert("Terjadi kesalahan.");
+      toast.error("Terjadi kesalahan.");
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
@@ -184,7 +190,7 @@ export default function EventDetailPage() {
           </div>
 
           {/* Description */}
-          <p className="text-gray-600 mb-6 leading-relaxed whitespace-pre-line">{activity.description}</p>
+          <p className="text-gray-600 mb-6 leading-relaxed whitespace-pre-line">{mainDescription}</p>
 
           {/* Details Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
@@ -254,6 +260,34 @@ export default function EventDetailPage() {
               </svg>
               View on Google Maps
             </a>
+          )}
+
+          {/* Host Contact & Payment Details Info Card */}
+          {paymentInfo && (paymentInfo.phone || paymentInfo.bank_name) && (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-6 space-y-3">
+              <h3 className="text-sm font-bold text-gray-800 border-b border-gray-200 pb-1.5 flex items-center gap-1.5">
+                <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Kontak & Informasi Pembayaran Anda
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                {paymentInfo.phone && (
+                  <div>
+                    <span className="text-xs text-gray-400 block">Nomor Telepon Host (WhatsApp)</span>
+                    <span className="font-semibold text-gray-900">{paymentInfo.phone}</span>
+                  </div>
+                )}
+                {paymentInfo.bank_name && (
+                  <div>
+                    <span className="text-xs text-gray-400 block">Detail Rekening Bank</span>
+                    <span className="font-semibold text-gray-900">
+                      {paymentInfo.bank_name} - {paymentInfo.bank_account} (a/n {paymentInfo.account_holder})
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Action Buttons */}
