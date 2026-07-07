@@ -309,6 +309,38 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
           Back to Transactions
         </button>
 
+        {/* Warning Banner for Rejected Payment */}
+        {transaction.status === 'failed' && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-red-100 rounded-xl text-red-600 shrink-0">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-bold text-red-900 text-base">Bukti Pembayaran Ditolak</h3>
+                <p className="text-sm text-red-700 leading-relaxed">
+                  Bukti transfer yang Anda unggah ditolak oleh Host. Silakan periksa kembali detail transaksi, pastikan nominal transfer sesuai, lalu unggah bukti transfer baru yang valid di bagian bawah halaman ini.
+                </p>
+              </div>
+            </div>
+            {paymentInfo?.phone && (
+              <a
+                href={`https://wa.me/${paymentInfo.phone.replace(/\D/g, "")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl text-sm transition-all shadow-sm shadow-green-100 hover:shadow-none cursor-pointer w-full sm:w-auto text-center"
+              >
+                <svg className="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.73-1.45L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.42 9.864-9.864.002-2.637-1.01-5.118-2.858-6.97-1.851-1.852-4.307-2.871-6.953-2.872-5.449 0-9.873 4.42-9.877 9.866-.001 1.77.465 3.498 1.348 5.011l-.995 3.635 3.738-.98l-.092-.058zm9.251-6.421c-.269-.134-1.597-.788-1.846-.878-.25-.09-.432-.134-.613.134-.181.269-.703.878-.862 1.057-.159.18-.318.202-.587.067-.269-.134-1.135-.419-2.162-1.336-.799-.713-1.338-1.593-1.495-1.862-.158-.269-.017-.415.118-.55.122-.121.27-.314.405-.471.135-.158.18-.27.27-.449.09-.18.045-.337-.023-.472-.068-.135-.613-1.478-.839-2.02-.22-.53-.442-.457-.613-.466-.159-.008-.34-.01-.522-.01-.182 0-.477.067-.726.337-.25.269-.953.931-.953 2.27 0 1.338.976 2.628 1.112 2.808.136.18 1.92 2.931 4.65 4.113.65.28 1.157.447 1.552.572.653.208 1.248.179 1.718.109.524-.078 1.597-.652 1.823-1.282.227-.63.227-1.169.159-1.28-.068-.113-.25-.18-.519-.314z"/>
+                </svg>
+                Tanya Host (WhatsApp)
+              </a>
+            )}
+          </div>
+        )}
+
         {/* SECTION 1: Transaction Detail */}
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
           <div className="flex justify-between items-start">
@@ -320,9 +352,14 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
             </div>
             {(() => {
               const isProofChecking = transaction.status === 'pending' && transaction.proof_payment_url;
-              const displayStatus = isProofChecking ? 'PROOF CHECKING' : transaction.status.toUpperCase();
+              const displayStatus = isProofChecking 
+                ? 'PROOF CHECKING' 
+                : transaction.status === 'failed' 
+                  ? 'REJECTED' 
+                  : transaction.status.toUpperCase();
               const statusClass = isProofChecking ? 'bg-blue-100 text-blue-800'
                 : (transaction.status === 'success' || transaction.status === 'paid') ? 'bg-green-100 text-green-800'
+                : transaction.status === 'failed' ? 'bg-red-100 text-red-800 border border-red-200'
                 : transaction.status === 'pending' ? 'bg-yellow-100 text-yellow-800'
                 : transaction.status === 'cancelled' ? 'bg-red-100 text-red-800'
                 : 'bg-gray-100 text-gray-800';
@@ -524,18 +561,28 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
                 : 'This transaction has been completed successfully.'}
             </p>
             {(transaction.status === 'success' || transaction.status === 'paid') && transaction.proof_payment_url && (
-              <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200 break-all">
-                <a
-                  href={transaction.proof_payment_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:text-blue-500 underline text-sm flex items-center gap-2"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-                  </svg>
-                  View Proof of Payment
-                </a>
+              <div className="mt-4 space-y-2">
+                <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center max-h-64">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={transaction.proof_payment_url}
+                    alt="Proof of Payment"
+                    className="max-h-60 w-full object-contain p-1"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <a
+                    href={transaction.proof_payment_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    View Full Payment Proof
+                  </a>
+                </div>
               </div>
             )}
           </div>
@@ -549,17 +596,25 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
                 <p className="text-sm font-medium text-gray-700">
                   Current Proof of Payment
                 </p>
-                <div className="p-4 bg-gray-50 rounded-md border border-gray-200 break-all">
+                <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center max-h-64">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={transaction.proof_payment_url}
+                    alt="Proof of Payment"
+                    className="max-h-60 w-full object-contain p-1"
+                  />
+                </div>
+                <div className="flex justify-end">
                   <a
                     href={transaction.proof_payment_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-500 underline text-sm flex items-center gap-2"
+                    className="inline-flex items-center gap-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
-                    View Proof of Payment
+                    View Full Payment Proof
                   </a>
                 </div>
               </div>
@@ -582,6 +637,9 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
                   onChange={handleFileChange}
                   className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                 />
+                <p className="mt-1.5 text-xs text-red-500 font-medium">
+                  * Format yang didukung: JPG, PNG, WEBP (Maksimal 512 KB)
+                </p>
               </div>
               {proofPreview && (
                 <div className="rounded-lg overflow-hidden border border-gray-200">

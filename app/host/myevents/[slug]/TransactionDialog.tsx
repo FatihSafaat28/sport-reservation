@@ -37,7 +37,7 @@ export default function TransactionDialog({ transaction, token, onClose, onStatu
     }
   };
 
-  const handleUpdateStatus = async () => {
+  const handleUpdateStatus = async (newStatus: "success" | "failed") => {
     setUpdating(true);
     try {
       const res = await fetch(`${API_BASE_URL}/transaction/update-status/${transaction.id}`, {
@@ -46,12 +46,16 @@ export default function TransactionDialog({ transaction, token, onClose, onStatu
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: "success" }),
+        body: JSON.stringify({ status: newStatus }),
       });
       const data = await res.json();
       console.log(data)
       if (!data.error) {
-        toast.success("Status transaksi berhasil diupdate!");
+        toast.success(
+          newStatus === "success" 
+            ? "Status transaksi berhasil di-approve!" 
+            : "Status transaksi berhasil di-reject!"
+        );
         onStatusUpdated();
       } else {
         toast.error(data.message || "Gagal mengupdate status.");
@@ -125,7 +129,7 @@ export default function TransactionDialog({ transaction, token, onClose, onStatu
 
             {/* Status */}
             <div className={`inline-block px-3 py-1.5 text-sm font-medium rounded-full border ${getStatusColor(tx.status)}`}>
-              Status: {tx.status}
+              Status: {tx.status.toLowerCase() === "failed" ? "rejected" : tx.status}
             </div>
 
             {/* Details */}
@@ -146,35 +150,54 @@ export default function TransactionDialog({ transaction, token, onClose, onStatu
 
             {/* Proof of Payment */}
             {tx.proof_payment_url && (
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Proof of Payment</p>
-                <a
-                  href={tx.proof_payment_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  View Payment Proof
-                </a>
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-gray-700">Proof of Payment</p>
+                <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center max-h-64">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={tx.proof_payment_url}
+                    alt="Proof of Payment"
+                    className="max-h-60 w-full object-contain p-1"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <a
+                    href={tx.proof_payment_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    View Full Payment Proof
+                  </a>
+                </div>
               </div>
             )}
 
-            {/* Update Status Button */}
-            {tx.status.toLowerCase() !== "success" && (
+            {/* Update Status Buttons */}
+            {!["success", "paid", "cancelled"].includes(tx.status.toLowerCase()) && (
               <div className="pt-4 border-t border-gray-100">
-                <button
-                  onClick={handleUpdateStatus}
-                  disabled={updating || !tx.proof_payment_url}
-                  className="w-full px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {updating ? "Updating..." : "Approve Transaction (Set to Success)"}
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => handleUpdateStatus("failed")}
+                    disabled={updating || !tx.proof_payment_url}
+                    className="flex-1 px-4 py-2 border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 font-medium rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed text-center cursor-pointer"
+                  >
+                    Reject Payment
+                  </button>
+                  <button
+                    onClick={() => handleUpdateStatus("success")}
+                    disabled={updating || !tx.proof_payment_url}
+                    className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed text-center cursor-pointer"
+                  >
+                    Approve Payment
+                  </button>
+                </div>
                 {!tx.proof_payment_url && (
                   <p className="mt-2 text-xs text-center text-red-500 font-medium">
-                    Payment proof is required to approve this transaction.
+                    Payment proof is required to review this transaction.
                   </p>
                 )}
               </div>

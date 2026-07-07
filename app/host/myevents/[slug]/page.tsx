@@ -340,7 +340,7 @@ export default function EventDetailPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(tx.status)}`}>
-                      {tx.status}
+                      {tx.status.toLowerCase() === "failed" ? "rejected" : tx.status}
                     </span>
                     <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />

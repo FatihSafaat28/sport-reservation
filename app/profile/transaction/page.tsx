@@ -48,14 +48,31 @@ export default function TransactionPage() {
       if (!result.result.error) {
         const data: TransactionDetail[] = result.result.data;
 
-        // Auto-cancel expired pending transactions without proof
-        const expiredPending = data.filter(
-          (t) =>
-            t.status === "pending" &&
-            !t.proof_payment_url &&
-            t.expired_date &&
-            new Date(t.expired_date) < new Date(),
-        );
+        // Auto-cancel expired pending/failed transactions based on rules:
+        // 1. Status is pending, no proof of payment, and expired_date is passed.
+        // 2. Status is failed (proof rejected), has proof, and it has been more than 2 days since host rejected it (updated_at).
+        const expiredPending = data.filter((t) => {
+          if (!t.expired_date) return false;
+
+          const expiredTime = new Date(t.expired_date).getTime();
+          const now = new Date().getTime();
+
+          // Rule 1: pending & no proof & expired_date passed
+          if (t.status === "pending" && !t.proof_payment_url && expiredTime < now) {
+            return true;
+          }
+
+          // Rule 2: failed & has proof & 2 days since host rejected it (updated_at) passed
+          if (t.status === "failed" && t.proof_payment_url && t.updated_at) {
+            const rejectTime = new Date(t.updated_at).getTime();
+            const twoDaysInMs = 2 * 24 * 60 * 60 * 1000; // 48 hours
+            if (now > rejectTime + twoDaysInMs) {
+              return true;
+            }
+          }
+
+          return false;
+        });
 
         if (expiredPending.length > 0) {
           await Promise.all(
@@ -84,8 +101,8 @@ export default function TransactionPage() {
     }
   };
 
-  // Check if a transaction is "pending" (includes proof checking)
-  const isPending = (t: TransactionDetail) => t.status === "pending";
+  // Check if a transaction is "pending" (includes proof checking and failed/rejected)
+  const isPending = (t: TransactionDetail) => t.status === "pending" || t.status === "failed";
 
   // Check if a transaction is "success"
   const isSuccess = (t: TransactionDetail) =>
@@ -109,16 +126,28 @@ export default function TransactionPage() {
         filtered = transactions.filter(isCancelled);
         break;
       default:
-        // "all" — sort pending first
-        filtered = [...transactions].sort((a, b) => {
-          const aPending = isPending(a) ? 0 : 1;
-          const bPending = isPending(b) ? 0 : 1;
-          return aPending - bPending;
-        });
+        filtered = [...transactions];
         break;
     }
 
-    return filtered;
+    // Sort transactions: failed (0) -> pending (1) -> success/paid/cancelled (2)
+    // Within the same priority, sort by date descending (newest first)
+    const getSortPriority = (t: TransactionDetail) => {
+      if (t.status === "failed") return 0;
+      if (t.status === "pending") return 1;
+      return 2;
+    };
+
+    return filtered.sort((a, b) => {
+      const priorityA = getSortPriority(a);
+      const priorityB = getSortPriority(b);
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      const timeA = a.order_date ? new Date(a.order_date).getTime() : (a.expired_date ? new Date(a.expired_date).getTime() : 0);
+      const timeB = b.order_date ? new Date(b.order_date).getTime() : (b.expired_date ? new Date(b.expired_date).getTime() : 0);
+      return timeB - timeA;
+    });
   })();
 
   // Pagination
@@ -136,6 +165,13 @@ export default function TransactionPage() {
 
   // Derive display status and expires label
   const getDisplayInfo = (t: TransactionDetail) => {
+    if (t.status === "failed") {
+      return {
+        displayStatus: "REJECTED",
+        statusClass: "bg-red-100 text-red-800 border-red-200",
+        expiresLabel: "Payment proof was rejected by host",
+      };
+    }
     if (t.status === "pending" && t.proof_payment_url) {
       return {
         displayStatus: "PROOF CHECKING",
