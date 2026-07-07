@@ -143,10 +143,16 @@ export default function Homepage() {
                     Daftarkan dirimu untuk dapat mengelola event mu sendiri!
                   </p>
                 </div>
-                <div>
-                  <Link href="/host/authentication/register" className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-full transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transform hover:-translate-y-1">
-                    Join Now
+                <div className="flex flex-col items-center md:items-start gap-3">
+                  <Link href="/authentication/register?role=host" className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white text-base font-semibold rounded-full transition-all duration-200 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 transform hover:-translate-y-1">
+                    Daftar Jadi Host
                   </Link>
+                  <span className="text-gray-500 text-sm">
+                    Sudah punya akun?{" "}
+                    <Link href="/authentication/login?role=host" className="font-semibold text-blue-600 hover:underline">
+                      Login Host
+                    </Link>
+                  </span>
                 </div>
               </div>
               <div className="md:w-1/2 relative w-full h-[300px] md:h-[400px] rounded-2xl overflow-hidden shadow-xl">

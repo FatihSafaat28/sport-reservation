@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { API_BASE_URL } from "@/lib/config";
+import { toast } from "sonner";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,9 +47,11 @@ export default function Navbar() {
       const result = await logout.json();
 
       if (!result) {
-        alert("Logout Gagal!");
+        toast.error("Logout Gagal!");
       } else {
-        alert(result.message);
+        toast.success(result.message || "Logout Berhasil!");
+        // Jeda agar user melihat toast sebelum halaman dimuat ulang
+        await new Promise((resolve) => setTimeout(resolve, 800));
       }
     } catch (error) {
       console.error("Error during logout:", error);

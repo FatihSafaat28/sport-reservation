@@ -35,7 +35,7 @@ export default function CreateEventPage() {
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     if (!token) {
-      router.push("/host/authentication/login");
+      router.push("/authentication/login?role=host");
       return;
     }
     fetchCategories();
@@ -96,7 +96,7 @@ export default function CreateEventPage() {
 
     const token = sessionStorage.getItem("token");
     if (!token) {
-      router.push("/host/authentication/login");
+      router.push("/authentication/login?role=host");
       return;
     }
 

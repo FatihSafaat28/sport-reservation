@@ -28,7 +28,7 @@ export default function HostProfilePage() {
   const fetchUserData = async () => {
     const token = sessionStorage.getItem("token");
     if (!token) {
-      router.push("/host/authentication/login");
+      router.push("/authentication/login?role=host");
       return;
     }
 

@@ -63,7 +63,7 @@ export default function EventDetailPage() {
 
   useEffect(() => {
     if (!token) {
-      router.push("/host/authentication/login");
+      router.push("/authentication/login?role=host");
       return;
     }
     fetchActivity();

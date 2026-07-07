@@ -19,7 +19,7 @@ export default function MyEventsPage() {
   useEffect(() => {
     const token = sessionStorage.getItem("token");
     if (!token) {
-      router.push("/host/authentication/login");
+      router.push("/authentication/login?role=host");
       return;
     }
     fetchUserAndEvents(token);
@@ -48,7 +48,7 @@ export default function MyEventsPage() {
 
       // Validate token
       if (!meData.success) {
-        router.push("/host/authentication/login");
+        router.push("/authentication/login?role=host");
         return;
       }
       const currentUserId = meData.data.id;

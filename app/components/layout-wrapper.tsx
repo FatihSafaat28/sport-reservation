@@ -11,7 +11,7 @@ export default function LayoutWrapper({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const isAuthPage = pathname.startsWith("/authentication") || pathname.startsWith("/host/authentication");
+  const isAuthPage = pathname.startsWith("/authentication");
   const isAdminPage = pathname.startsWith("/admin");
 
   if (isAdminPage) {
