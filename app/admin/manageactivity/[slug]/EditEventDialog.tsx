@@ -6,6 +6,8 @@ import { SportActivity } from "@/lib/interface/sportactivity";
 import { SportCategory } from "@/lib/interface/sportcategory";
 import { Province } from "@/lib/interface/province";
 import { City } from "@/lib/interface/city";
+import { parseEventDescription, encodeEventDescription } from "@/lib/utils/eventHelper";
+import { toast } from "sonner";
 
 interface EditEventDialogProps {
   activity: SportActivity;
@@ -17,9 +19,13 @@ interface EditEventDialogProps {
 export default function EditEventDialog({ activity, token, onClose, onUpdated }: EditEventDialogProps) {
   const [loading, setLoading] = useState(false);
 
+  // Parse description metadata
+  const parsedData = parseEventDescription(activity.description);
+
   // Form state
   const [title, setTitle] = useState(activity.title);
-  const [description, setDescription] = useState(activity.description);
+  const [description, setDescription] = useState(parsedData.mainDescription);
+  const [paymentInfo] = useState(parsedData.paymentInfo);
   const [sportCategoryId, setSportCategoryId] = useState("");
   const [provinceId, setProvinceId] = useState("");
   const [cityId, setCityId] = useState("");
@@ -108,11 +114,15 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
     e.preventDefault();
     setLoading(true);
 
+    const finalDescription = paymentInfo
+      ? encodeEventDescription(description, paymentInfo)
+      : description;
+
     const payload = {
       sport_category_id: Number(sportCategoryId),
       city_id: Number(cityId),
       title,
-      description,
+      description: finalDescription,
       slot: Number(slot),
       price: Number(price.toString().replace(/\./g, "")),
       address,
@@ -133,14 +143,14 @@ export default function EditEventDialog({ activity, token, onClose, onUpdated }:
       });
       const result = await res.json();
       if (!result.error) {
-        alert("Event berhasil diupdate!");
+        toast.success("Event berhasil diupdate!");
         onUpdated();
       } else {
-        alert(result.message || "Gagal mengupdate event.");
+        toast.error(result.message || "Gagal mengupdate event.");
       }
     } catch (error) {
       console.error("Error updating event:", error);
-      alert("Terjadi kesalahan.");
+      toast.error("Terjadi kesalahan.");
     } finally {
       setLoading(false);
     }

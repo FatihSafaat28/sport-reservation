@@ -127,6 +127,39 @@ export default function EventDetailPage() {
     }
   };
 
+  // Check if a transaction's payment grace period or event start time has expired
+  const isTxExpired = (t: TransactionDetail) => {
+    const now = new Date();
+
+    // 1. Hard Limit: Event Start Time Passed
+    const act = t.transaction_items?.sport_activities || activity;
+    if (act) {
+      const eventStartTime = new Date(`${act.activity_date}T${act.start_time}`);
+      if (now > eventStartTime) {
+        return true;
+      }
+    }
+
+    // 2. Grace Period Limit for failed status: 2 days (48 hours) from updated_at
+    if (t.status === "failed" && t.updated_at) {
+      const rejectTime = new Date(t.updated_at).getTime();
+      const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+      if (now.getTime() > rejectTime + twoDaysInMs) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const visibleTransactions = transactions.filter((tx) => {
+    // Hide failed transactions that have expired (past grace period or event started)
+    if (tx.status === "failed") {
+      return !isTxExpired(tx);
+    }
+    return true;
+  });
+
   if (loading) {
     return (
       <div className="max-w-[1440px] mx-auto px-8 py-12">
@@ -312,16 +345,16 @@ export default function EventDetailPage() {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-6 md:p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-4">
-            User Transaction List ({transactions.length})
+            User Transaction List ({visibleTransactions.length})
           </h2>
 
-          {transactions.length === 0 ? (
+          {visibleTransactions.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-400">Belum ada peserta yang mendaftar.</p>
             </div>
           ) : (
             <div className="space-y-3">
-              {transactions.map((tx) => (
+              {visibleTransactions.map((tx) => (
                 <button
                   key={tx.id}
                   onClick={() => {

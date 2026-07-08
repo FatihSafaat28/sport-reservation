@@ -6,6 +6,7 @@ import { SportCategory } from "@/lib/interface/sportcategory";
 import { SportActivity } from "@/lib/interface/sportactivity";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
@@ -71,12 +72,13 @@ export default function ManageEventPage() {
       if (!data.error) {
         setNewCategoryName("");
         fetchCategories();
-        alert("Kategori berhasil dibuat!");
+        toast.success("Kategori berhasil dibuat!");
       } else {
-        alert(data.message || "Gagal membuat kategori.");
+        toast.error(data.message || "Gagal membuat kategori.");
       }
     } catch (error) {
       console.error("Error creating category:", error);
+      toast.error("Terjadi kesalahan.");
     } finally {
       setCategoryLoading(false);
     }
@@ -99,12 +101,13 @@ export default function ManageEventPage() {
         setEditingCategoryId(null);
         setEditCategoryName("");
         fetchCategories();
-        alert("Kategori berhasil diupdate!");
+        toast.success("Kategori berhasil diupdate!");
       } else {
-        alert(data.message || "Gagal mengupdate kategori.");
+        toast.error(data.message || "Gagal mengupdate kategori.");
       }
     } catch (error) {
       console.error("Error updating category:", error);
+      toast.error("Terjadi kesalahan.");
     } finally {
       setCategoryLoading(false);
     }
@@ -121,12 +124,13 @@ export default function ManageEventPage() {
       const data = await res.json();
       if (!data.error) {
         fetchCategories();
-        alert("Kategori berhasil dihapus!");
+        toast.success("Kategori berhasil dihapus!");
       } else {
-        alert(data.message || "Gagal menghapus kategori.");
+        toast.error(data.message || "Gagal menghapus kategori.");
       }
     } catch (error) {
       console.error("Error deleting category:", error);
+      toast.error("Terjadi kesalahan.");
     } finally {
       setDeletingCategoryId(null);
     }
@@ -172,12 +176,13 @@ export default function ManageEventPage() {
       const data = await res.json();
       if (!data.error) {
         fetchActivities(token);
-        alert("Event berhasil dihapus!");
+        toast.success("Event berhasil dihapus!");
       } else {
-        alert(data.message || "Gagal menghapus event.");
+        toast.error(data.message || "Gagal menghapus event.");
       }
     } catch (error) {
       console.error("Error deleting activity:", error);
+      toast.error("Terjadi kesalahan.");
     } finally {
       setDeletingActivityId(null);
       setShowDeleteConfirm(null);

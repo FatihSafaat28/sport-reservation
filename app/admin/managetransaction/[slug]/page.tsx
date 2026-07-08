@@ -5,6 +5,7 @@ import { API_BASE_URL } from "@/lib/config";
 import { useRouter, useParams } from "next/navigation";
 import { TransactionDetail } from "@/lib/interface/transactiondetail";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
@@ -46,7 +47,60 @@ export default function TransactionDetailPage() {
     }
   }, [slug, token]);
 
-  const handleUpdateStatus = async () => {
+  const getExpirationReason = () => {
+    if (!transaction) return null;
+    const now = new Date();
+
+    const activity = transaction.transaction_items?.sport_activities;
+    if (activity) {
+      const eventStartTime = new Date(`${activity.activity_date}T${activity.start_time}`);
+      if (now > eventStartTime) {
+        return "event_started";
+      }
+    }
+
+    if (transaction.status === "failed" && transaction.updated_at) {
+      const rejectTime = new Date(transaction.updated_at).getTime();
+      const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+      if (now.getTime() > rejectTime + twoDaysInMs) {
+        return "grace_expired";
+      }
+    }
+
+    if (transaction.status === "pending" && !transaction.proof_payment_url && transaction.expired_date) {
+      const expiredTime = new Date(transaction.expired_date).getTime();
+      if (now.getTime() > expiredTime) {
+        return "pending_expired";
+      }
+    }
+
+    return null;
+  };
+
+  const isTxExpired = getExpirationReason() !== null;
+
+  const getDynamicExpiredDate = () => {
+    if (!transaction) return null;
+    if (transaction.status !== "failed" || !transaction.updated_at) {
+      return transaction.expired_date ? new Date(transaction.expired_date) : null;
+    }
+
+    const rejectTime = new Date(transaction.updated_at).getTime();
+    const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+    let computedExpiredTime = rejectTime + twoDaysInMs;
+
+    const activity = transaction.transaction_items?.sport_activities;
+    if (activity) {
+      const eventStartTime = new Date(`${activity.activity_date}T${activity.start_time}`).getTime();
+      if (eventStartTime < computedExpiredTime) {
+        computedExpiredTime = eventStartTime;
+      }
+    }
+
+    return new Date(computedExpiredTime);
+  };
+
+  const handleUpdateStatus = async (newStatus: "success" | "failed") => {
     if (!token) return;
     setUpdating(true);
     try {
@@ -56,18 +110,18 @@ export default function TransactionDetailPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ status: "success" }),
+        body: JSON.stringify({ status: newStatus }),
       });
       const data = await res.json();
       if (!data.error) {
-        alert(`Status transaksi berhasil diupdate`);
+        toast.success(`Status transaksi berhasil diupdate`);
         fetchTransaction();
       } else {
-        alert(data.message || "Gagal mengupdate status.");
+        toast.error(data.message || "Gagal mengupdate status.");
       }
     } catch (error) {
       console.error("Error updating status:", error);
-      alert("Terjadi kesalahan.");
+      toast.error("Terjadi kesalahan.");
     } finally {
       setUpdating(false);
     }
@@ -87,14 +141,14 @@ export default function TransactionDetailPage() {
       });
       const data = await res.json();
       if (!data.error) {
-        alert("Transaksi berhasil dibatalkan!");
+        toast.success("Transaksi berhasil dibatalkan!");
         fetchTransaction();
       } else {
-        alert(data.message || "Gagal membatalkan transaksi.");
+        toast.error(data.message || "Gagal membatalkan transaksi.");
       }
     } catch (error) {
       console.error("Error cancelling transaction:", error);
-      alert("Terjadi kesalahan.");
+      toast.error("Terjadi kesalahan.");
     } finally {
       setUpdating(false);
     }
@@ -121,7 +175,7 @@ export default function TransactionDetailPage() {
 
   const isFinalStatus = (status: string) => {
     const s = status.toLowerCase();
-    return s === "success" || s === "cancelled" || s === "failed";
+    return s === "success" || s === "cancelled";
   };
 
   if (loading) {
@@ -171,8 +225,10 @@ export default function TransactionDetailPage() {
               <h1 className="text-2xl font-bold text-gray-900 mb-1">Transaction Detail</h1>
               <p className="text-sm text-gray-500">{transaction.invoice_id}</p>
             </div>
-            <span className={`px-3 py-1.5 text-sm font-medium rounded-full border ${getStatusColor(transaction.status)}`}>
-              {transaction.status}
+            <span className={`px-3 py-1.5 text-sm font-medium rounded-full border ${getStatusColor(transaction.status)} ${isTxExpired ? "opacity-60" : ""}`}>
+              {transaction.status.toLowerCase() === "failed"
+                ? (isTxExpired ? "rejected (expired)" : "rejected")
+                : transaction.status}
             </span>
           </div>
 
@@ -209,7 +265,9 @@ export default function TransactionDetailPage() {
             </div>
             <div className="flex justify-between py-2 border-b border-gray-100">
               <span className="text-gray-500">Expired Date</span>
-              <span className="font-medium text-gray-900">{formatDate(transaction.expired_date)}</span>
+              <span className="font-medium text-gray-900">
+                {getDynamicExpiredDate() ? formatDate(getDynamicExpiredDate()!.toISOString()) : "N/A"}
+              </span>
             </div>
           </div>
 
@@ -246,45 +304,66 @@ export default function TransactionDetailPage() {
                   className="w-full max-h-[400px] object-contain"
                 />
               </div>
-              <a
-                href={transaction.proof_payment_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm text-green-600 hover:text-green-700 font-medium transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-                View Payment Proof
-              </a>
+              <div className="flex justify-end mt-2">
+                <a
+                  href={transaction.proof_payment_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  View Full Payment Proof
+                </a>
+              </div>
             </div>
           )}
 
           {/* Action Buttons */}
           {!isFinalStatus(transaction.status) && (
-            <div className="pt-4 border-t border-gray-100">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button
-                  onClick={handleUpdateStatus}
-                  disabled={updating || !transaction.proof_payment_url}
-                  className="flex-1 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed text-center cursor-pointer"
-                >
-                  {updating ? "Updating..." : "✓ Approve (Success)"}
-                </button>
-                <button
-                  onClick={handleCancelTransaction}
-                  disabled={updating}
-                  className="flex-1 px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors text-sm border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-center"
-                >
-                  {updating ? "Updating..." : "✗ Cancel Transaction"}
-                </button>
-              </div>
-              {!transaction.proof_payment_url && (
-                <p className="mt-3 text-xs text-center text-red-500 font-medium">
-                  Payment proof is required to approve this transaction.
+            isTxExpired ? (
+              <div className="pt-4 border-t border-gray-100 text-center">
+                <p className="text-sm font-semibold text-red-500 bg-red-50 border border-red-100 rounded-lg p-3 inline-block">
+                  {getExpirationReason() === "event_started"
+                    ? "✓ Event ini sudah berlangsung. Transaksi ini tidak dapat diproses lagi."
+                    : "✓ Masa tenggang transaksi ini telah berakhir. Transaksi sudah kedaluwarsa secara otomatis."}
                 </p>
-              )}
-            </div>
+              </div>
+            ) : (
+              <div className="pt-4 border-t border-gray-100">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => handleUpdateStatus("success")}
+                    disabled={updating || !transaction.proof_payment_url}
+                    className="flex-1 px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed text-center cursor-pointer"
+                  >
+                    {updating ? "Updating..." : "✓ Approve Payment"}
+                  </button>
+                  <button
+                    onClick={() => handleUpdateStatus("failed")}
+                    disabled={updating || !transaction.proof_payment_url}
+                    className="flex-1 px-5 py-2.5 bg-white hover:bg-red-50 text-red-600 border border-red-200 font-medium rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed text-center cursor-pointer"
+                  >
+                    {updating ? "Updating..." : "✗ Reject Payment"}
+                  </button>
+                  {transaction.status !== "failed" && (
+                    <button
+                      onClick={handleCancelTransaction}
+                      disabled={updating}
+                      className="flex-1 px-5 py-2.5 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-lg transition-colors text-sm border border-red-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-center"
+                    >
+                      {updating ? "Updating..." : "✗ Cancel Booking"}
+                    </button>
+                  )}
+                </div>
+                {!transaction.proof_payment_url && (
+                  <p className="mt-3 text-xs text-center text-red-500 font-medium">
+                    Payment proof is required to approve or reject this transaction.
+                  </p>
+                )}
+              </div>
+            )
           )}
         </div>
       </div>

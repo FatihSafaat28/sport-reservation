@@ -27,6 +27,60 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
   const { mainDescription, paymentInfo } = activity 
     ? parseEventDescription(activity.description) 
     : { mainDescription: "", paymentInfo: null };
+
+  const getExpirationReason = () => {
+    if (!transaction) return null;
+    const now = new Date();
+
+    const act = transaction.transaction_items?.sport_activities || activity;
+    if (act) {
+      const eventStartTime = new Date(`${act.activity_date}T${act.start_time}`);
+      if (now > eventStartTime) {
+        return "event_started";
+      }
+    }
+
+    if (transaction.status === "failed" && transaction.updated_at) {
+      const rejectTime = new Date(transaction.updated_at).getTime();
+      const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+      if (now.getTime() > rejectTime + twoDaysInMs) {
+        return "grace_expired";
+      }
+    }
+
+    if (transaction.status === "pending" && !transaction.proof_payment_url && transaction.expired_date) {
+      const expiredTime = new Date(transaction.expired_date).getTime();
+      if (now.getTime() > expiredTime) {
+        return "pending_expired";
+      }
+    }
+
+    return null;
+  };
+
+  const isTxExpired = getExpirationReason() !== null;
+
+  const getDynamicExpiredDate = () => {
+    if (!transaction) return null;
+    if (transaction.status !== "failed" || !transaction.updated_at) {
+      return transaction.expired_date ? new Date(transaction.expired_date) : null;
+    }
+
+    const rejectTime = new Date(transaction.updated_at).getTime();
+    const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+    let computedExpiredTime = rejectTime + twoDaysInMs;
+
+    const act = transaction.transaction_items?.sport_activities || activity;
+    if (act) {
+      const eventStartTime = new Date(`${act.activity_date}T${act.start_time}`).getTime();
+      if (eventStartTime < computedExpiredTime) {
+        computedExpiredTime = eventStartTime;
+      }
+    }
+
+    return new Date(computedExpiredTime);
+  };
+
   const [proofFile, setProofFile] = useState<File | null>(null);
   const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -394,7 +448,7 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
                 <div>
                   <p className="text-sm font-medium text-gray-500">Payment Deadline</p>
                   <p className="text-base text-gray-900">
-                    {isProofChecking ? 'Proof under Checking' : (transaction.expired_date ? new Date(transaction.expired_date).toLocaleString() : 'N/A')}
+                    {isProofChecking ? 'Proof under Checking' : (getDynamicExpiredDate() ? getDynamicExpiredDate()!.toLocaleString() : 'N/A')}
                   </p>
                 </div>
               );
@@ -585,6 +639,45 @@ export default function TransactionDetailPage({ params }: { params: Promise<{ sl
                 </div>
               </div>
             )}
+          </div>
+        ) : isTxExpired ? (
+          <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Payment Proof</h2>
+            <div className="space-y-4">
+              <p className="text-sm font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg p-3">
+                {getExpirationReason() === "event_started"
+                  ? "Event ini sudah dimulai/berlangsung. Anda tidak dapat mengunggah bukti pembayaran lagi."
+                  : "Masa tenggang unggah ulang bukti pembayaran (2 hari) telah berakhir. Transaksi ini telah kedaluwarsa secara otomatis."}
+              </p>
+              {transaction.proof_payment_url && (
+                <div className="space-y-2">
+                  <p className="text-sm font-medium text-gray-700">
+                    Proof of Payment Submitted
+                  </p>
+                  <div className="border border-gray-200 rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center max-h-64">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={transaction.proof_payment_url}
+                      alt="Proof of Payment"
+                      className="max-h-60 w-full object-contain p-1"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <a
+                      href={transaction.proof_payment_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-xs bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-100 font-semibold px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                      View Full Payment Proof
+                    </a>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
         <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">

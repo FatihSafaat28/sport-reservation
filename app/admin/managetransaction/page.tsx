@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { useRouter } from "next/navigation";
 import { TransactionDetail } from "@/lib/interface/transactiondetail";
@@ -15,6 +15,7 @@ export default function ManageTransactionPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isMobile, setIsMobile] = useState(false);
+  const attemptedCancels = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -42,16 +43,25 @@ export default function ManageTransactionPage() {
       if (!data.error) {
         const rawData: TransactionDetail[] = data.result || [];
 
-        // Auto-cancel expired pending transactions
-        const expiredPending = rawData.filter(
-          (t) =>
-            t.status === "pending" &&
-            !t.proof_payment_url &&
-            t.expired_date &&
-            new Date(t.expired_date) < new Date()
-        );
+        // Auto-cancel expired pending transactions (Rule 1: pending, no proof, and expired_date is passed)
+        const expiredPending = rawData.filter((t) => {
+          if (attemptedCancels.current.has(t.id)) return false;
+          if (!t.expired_date) return false;
+
+          const expiredTime = new Date(t.expired_date).getTime();
+          const now = new Date().getTime();
+
+          if (t.status === "pending" && !t.proof_payment_url && expiredTime < now) {
+            return true;
+          }
+
+          return false;
+        });
 
         if (expiredPending.length > 0) {
+          // Record attempted cancels to prevent infinite loop
+          expiredPending.forEach((t) => attemptedCancels.current.add(t.id));
+
           await Promise.all(
             expiredPending.map((t) =>
               fetch(`${API_BASE_URL}/transaction/cancel/${t.id}`, {
@@ -93,12 +103,42 @@ export default function ManageTransactionPage() {
     }
   };
 
+  // Check if a transaction's payment grace period or event start time has expired
+  const isTxExpired = (t: TransactionDetail) => {
+    const now = new Date();
+
+    // 1. Hard Limit: Event Start Time Passed
+    const activity = t.transaction_items?.sport_activities;
+    if (activity) {
+      const eventStartTime = new Date(`${activity.activity_date}T${activity.start_time}`);
+      if (now > eventStartTime) {
+        return true;
+      }
+    }
+
+    // 2. Grace Period Limit for failed status: 2 days (48 hours) from updated_at
+    if (t.status === "failed" && t.updated_at) {
+      const rejectTime = new Date(t.updated_at).getTime();
+      const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+      if (now.getTime() > rejectTime + twoDaysInMs) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
   const filteredTransactions = transactions.filter((t) => {
     const q = search.toLowerCase();
+    const isExpired = isTxExpired(t);
+    let displayStatus = t.status.toLowerCase();
+    if (displayStatus === "failed") {
+      displayStatus = isExpired ? "rejected (expired)" : "rejected";
+    }
     return (
       t.invoice_id?.toLowerCase().includes(q) ||
       t.username.toLowerCase().includes(q) ||
-      t.status?.toLowerCase().includes(q)
+      displayStatus.includes(q)
     );
   });
 
@@ -189,11 +229,13 @@ export default function ManageTransactionPage() {
                     </td>
                     <td className="py-3 px-3 font-medium text-gray-700 hidden sm:table-cell">{formatPrice(tx.total_amount)}</td>
                     <td className="py-3 px-3 text-gray-500 hidden md:table-cell text-xs">{formatDate(tx.order_date)}</td>
-                    <td className="py-3 px-3">
-                      <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(tx.status)}`}>
-                        {tx.status}
-                      </span>
-                    </td>
+                     <td className="py-3 px-3">
+                       <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${getStatusColor(tx.status)} ${isTxExpired(tx) ? "opacity-60" : ""}`}>
+                         {tx.status.toLowerCase() === "failed"
+                           ? (isTxExpired(tx) ? "rejected (expired)" : "rejected")
+                           : tx.status}
+                       </span>
+                     </td>
                     <td className="py-3 px-3 text-right">
                       <Link
                         href={`/admin/managetransaction/${tx.id}`}
@@ -243,11 +285,10 @@ export default function ManageTransactionPage() {
                     )}
                     <button
                       onClick={() => setCurrentPage(page)}
-                      className={`min-w-[36px] h-9 px-2 text-sm font-medium rounded-lg transition-colors ${
-                        currentPage === page
+                      className={`min-w-[36px] h-9 px-2 text-sm font-medium rounded-lg transition-colors ${currentPage === page
                           ? "bg-blue-600 text-white"
                           : "text-gray-600 hover:bg-gray-100"
-                      }`}
+                        }`}
                     >
                       {page}
                     </button>

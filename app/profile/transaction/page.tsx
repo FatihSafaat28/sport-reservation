@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { API_BASE_URL } from "@/lib/config";
 import { useRouter } from "next/navigation";
 import { TransactionDetail } from "@/lib/interface/transactiondetail";
@@ -14,6 +14,7 @@ export default function TransactionPage() {
   >("all");
   const [currentPage, setCurrentPage] = useState(1);
   const perPage = 5;
+  const attemptedCancels = useRef<Set<string>>(new Set());
 
   const filters = [
     { key: "all" as const, label: "All" },
@@ -48,33 +49,25 @@ export default function TransactionPage() {
       if (!result.result.error) {
         const data: TransactionDetail[] = result.result.data;
 
-        // Auto-cancel expired pending/failed transactions based on rules:
-        // 1. Status is pending, no proof of payment, and expired_date is passed.
-        // 2. Status is failed (proof rejected), has proof, and it has been more than 2 days since host rejected it (updated_at).
+        // Auto-cancel expired pending transactions (Rule 1: pending, no proof, and expired_date is passed)
         const expiredPending = data.filter((t) => {
+          if (attemptedCancels.current.has(t.id)) return false;
           if (!t.expired_date) return false;
 
           const expiredTime = new Date(t.expired_date).getTime();
           const now = new Date().getTime();
 
-          // Rule 1: pending & no proof & expired_date passed
           if (t.status === "pending" && !t.proof_payment_url && expiredTime < now) {
             return true;
-          }
-
-          // Rule 2: failed & has proof & 2 days since host rejected it (updated_at) passed
-          if (t.status === "failed" && t.proof_payment_url && t.updated_at) {
-            const rejectTime = new Date(t.updated_at).getTime();
-            const twoDaysInMs = 2 * 24 * 60 * 60 * 1000; // 48 hours
-            if (now > rejectTime + twoDaysInMs) {
-              return true;
-            }
           }
 
           return false;
         });
 
         if (expiredPending.length > 0) {
+          // Record attempted cancels to prevent infinite loop
+          expiredPending.forEach((t) => attemptedCancels.current.add(t.id));
+
           await Promise.all(
             expiredPending.map((t) =>
               fetch(`${API_BASE_URL}/transaction/cancel/${t.id}`, {
@@ -101,15 +94,92 @@ export default function TransactionPage() {
     }
   };
 
-  // Check if a transaction is "pending" (includes proof checking and failed/rejected)
-  const isPending = (t: TransactionDetail) => t.status === "pending" || t.status === "failed";
+  // Check if a transaction's payment grace period or event start time has expired
+  const isTxExpired = (t: TransactionDetail) => {
+    const now = new Date();
+
+    // 1. Hard Limit: Event Start Time Passed
+    const activity = t.transaction_items?.sport_activities;
+    if (activity) {
+      const eventStartTime = new Date(`${activity.activity_date}T${activity.start_time}`);
+      if (now > eventStartTime) {
+        return true;
+      }
+    }
+
+    // 2. Grace Period Limit for failed status: 2 days (48 hours) from updated_at
+    if (t.status === "failed" && t.updated_at) {
+      const rejectTime = new Date(t.updated_at).getTime();
+      const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+      if (now.getTime() > rejectTime + twoDaysInMs) {
+        return true;
+      }
+    }
+
+    // 3. Expiration Limit for pending status without proof: expired_date passed
+    if (t.status === "pending" && !t.proof_payment_url && t.expired_date) {
+      const expiredTime = new Date(t.expired_date).getTime();
+      if (now.getTime() > expiredTime) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  const getDynamicExpiredDate = (t: TransactionDetail) => {
+    if (t.status !== "failed" || !t.updated_at) {
+      return t.expired_date ? new Date(t.expired_date) : null;
+    }
+
+    const rejectTime = new Date(t.updated_at).getTime();
+    const twoDaysInMs = 2 * 24 * 60 * 60 * 1000;
+    let computedExpiredTime = rejectTime + twoDaysInMs;
+
+    const activity = t.transaction_items?.sport_activities;
+    if (activity) {
+      const eventStartTime = new Date(`${activity.activity_date}T${activity.start_time}`).getTime();
+      if (eventStartTime < computedExpiredTime) {
+        computedExpiredTime = eventStartTime;
+      }
+    }
+
+    return new Date(computedExpiredTime);
+  };
+
+  // Check if a transaction is "pending" (includes proof checking and failed/rejected if not expired)
+  const isPending = (t: TransactionDetail) => {
+    if (t.status === "pending") {
+      // For pending without proof, show in pending tab unless expired_date is passed
+      if (!t.proof_payment_url && t.expired_date) {
+        const expiredTime = new Date(t.expired_date).getTime();
+        return new Date().getTime() <= expiredTime;
+      }
+      return true; // Pending with proof is always pending checking
+    }
+    // Failed is pending only if grace period is not expired
+    if (t.status === "failed") {
+      return !isTxExpired(t);
+    }
+    return false;
+  };
 
   // Check if a transaction is "success"
   const isSuccess = (t: TransactionDetail) =>
     t.status === "success" || t.status === "paid";
 
-  // Check if a transaction is "cancelled"
-  const isCancelled = (t: TransactionDetail) => t.status === "cancelled";
+  // Check if a transaction is "cancelled" (includes cancelled status, or expired pending/failed)
+  const isCancelled = (t: TransactionDetail) => {
+    if (t.status === "cancelled") return true;
+    // Failed status that is expired becomes visual cancelled/expired
+    if (t.status === "failed" && isTxExpired(t)) return true;
+    // Pending status without proof that is expired becomes visual cancelled/expired
+    if (t.status === "pending" && !t.proof_payment_url && t.expired_date) {
+      const expiredTime = new Date(t.expired_date).getTime();
+      return new Date().getTime() > expiredTime;
+    }
+    return false;
+  };
 
   // Filter & sort transactions based on active filter
   const filteredTransactions = (() => {
@@ -133,8 +203,8 @@ export default function TransactionPage() {
     // Sort transactions: failed (0) -> pending (1) -> success/paid/cancelled (2)
     // Within the same priority, sort by date descending (newest first)
     const getSortPriority = (t: TransactionDetail) => {
-      if (t.status === "failed") return 0;
-      if (t.status === "pending") return 1;
+      if (t.status === "failed" && !isTxExpired(t)) return 0;
+      if (t.status === "pending" && !isTxExpired(t)) return 1;
       return 2;
     };
 
@@ -165,11 +235,22 @@ export default function TransactionPage() {
 
   // Derive display status and expires label
   const getDisplayInfo = (t: TransactionDetail) => {
+    const expired = isTxExpired(t);
+
     if (t.status === "failed") {
+      if (expired) {
+        return {
+          displayStatus: "REJECTED (EXPIRED)",
+          statusClass: "bg-red-100 text-red-800 border-red-200 opacity-60",
+          expiresLabel: "Payment proof rejected and grace period expired",
+        };
+      }
       return {
         displayStatus: "REJECTED",
         statusClass: "bg-red-100 text-red-800 border-red-200",
-        expiresLabel: "Payment proof was rejected by host",
+        expiresLabel: getDynamicExpiredDate(t)
+          ? `Re-upload expires: ${getDynamicExpiredDate(t)!.toLocaleString()}`
+          : "Payment proof was rejected by host",
       };
     }
     if (t.status === "pending" && t.proof_payment_url) {
@@ -186,7 +267,7 @@ export default function TransactionPage() {
         expiresLabel: null,
       };
     }
-    if (t.status === "cancelled") {
+    if (t.status === "cancelled" || (t.status === "failed" && expired)) {
       return {
         displayStatus: "CANCELLED",
         statusClass: "bg-red-100 text-red-800",
@@ -197,8 +278,8 @@ export default function TransactionPage() {
     return {
       displayStatus: "PENDING",
       statusClass: "bg-yellow-100 text-yellow-800",
-      expiresLabel: t.expired_date
-        ? new Date(t.expired_date).toLocaleString()
+      expiresLabel: getDynamicExpiredDate(t)
+        ? getDynamicExpiredDate(t)!.toLocaleString()
         : null,
     };
   };
