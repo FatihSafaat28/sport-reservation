@@ -81,8 +81,8 @@ export default function Navbar() {
   const menu = [
     { label: "Home", href: "/" },
     { label: "Explore", href: "/explore" },
-    { label: "About", href: "/" },
-    { label: "Contact", href: "/" },
+    { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
   ];
 
   // ============================================
