@@ -30,6 +30,8 @@ export default function ManageEventPage() {
   const [deletingActivityId, setDeletingActivityId] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
   const ITEMS_PER_PAGE = 10;
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "ended">("all");
+  const [sortBy, setSortBy] = useState<"upcoming" | "furthest" | "newest">("upcoming");
 
   useEffect(() => {
     const t = sessionStorage.getItem("token");
@@ -146,17 +148,7 @@ export default function ManageEventPage() {
       const data = await res.json();
       if (!data.error) {
         const all: SportActivity[] = data.result || [];
-        const now = new Date();
-
-        const active = [...all]
-          .filter((a) => new Date(a.activity_date) >= now)
-          .sort((a, b) => new Date(b.activity_date).getTime() - new Date(a.activity_date).getTime());
-
-        const ended = [...all]
-          .filter((a) => new Date(a.activity_date) < now)
-          .sort((a, b) => new Date(b.activity_date).getTime() - new Date(a.activity_date).getTime());
-
-        setActivities([...active, ...ended]);
+        setActivities(all);
       }
     } catch (error) {
       console.error("Error fetching activities:", error);
@@ -195,9 +187,38 @@ export default function ManageEventPage() {
   const formatDate = (dateString: string) =>
     new Date(dateString).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" });
 
-  const filteredActivities = activities.filter((a) =>
-    a.title.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredActivities = activities
+    .filter((a) => {
+      const matchesSearch = a.title.toLowerCase().includes(search.toLowerCase());
+      if (!matchesSearch) return false;
+
+      const isPast = new Date(a.activity_date) < new Date();
+      if (statusFilter === "active") return !isPast;
+      if (statusFilter === "ended") return isPast;
+      return true;
+    })
+    .sort((a, b) => {
+      if (sortBy === "newest") {
+        return b.id - a.id;
+      }
+      if (sortBy === "furthest") {
+        return new Date(b.activity_date).getTime() - new Date(a.activity_date).getTime();
+      }
+      // Default: "upcoming" (Event Terdekat / Soonest first)
+      const now = new Date().getTime();
+      const timeA = new Date(a.activity_date).getTime();
+      const timeB = new Date(b.activity_date).getTime();
+      const isPastA = timeA < now;
+      const isPastB = timeB < now;
+
+      if (!isPastA && !isPastB) {
+        return timeA - timeB;
+      }
+      if (isPastA && isPastB) {
+        return timeB - timeA;
+      }
+      return isPastA ? 1 : -1;
+    });
 
   const totalPages = Math.ceil(filteredActivities.length / ITEMS_PER_PAGE);
   const paginatedActivities = filteredActivities.slice(
@@ -308,24 +329,82 @@ export default function ManageEventPage() {
 
       {/* ─── EVENT ACTIVITY SECTION ────────────────────────────── */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex flex-col gap-4 mb-6">
           <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
             <svg className="w-5 h-5 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
             Event Activities ({filteredActivities.length})
           </h2>
-          <div className="relative w-full sm:w-64">
-            <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Cari event..."
-              className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white text-gray-900 text-sm"
-              value={search}
-              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
-            />
+          
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-2">
+            {/* Status Tabs */}
+            <div className="flex bg-gray-100 p-1 rounded-lg w-fit shrink-0">
+              <button
+                onClick={() => { setStatusFilter("all"); setCurrentPage(1); }}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  statusFilter === "all"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-900"
+                }`}
+              >
+                All Events
+              </button>
+              <button
+                onClick={() => { setStatusFilter("active"); setCurrentPage(1); }}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  statusFilter === "active"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-900"
+                }`}
+              >
+                Active Events
+              </button>
+              <button
+                onClick={() => { setStatusFilter("ended"); setCurrentPage(1); }}
+                className={`px-4 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                  statusFilter === "ended"
+                    ? "bg-white text-gray-900 shadow-sm"
+                    : "text-gray-500 hover:text-gray-900"
+                }`}
+              >
+                Ended Events
+              </button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+              {/* Sort Dropdown */}
+              <div className="relative shrink-0 sm:w-44">
+                <select
+                  value={sortBy}
+                  onChange={(e) => { setSortBy(e.target.value as any); setCurrentPage(1); }}
+                  className="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none bg-white text-gray-700 text-sm appearance-none cursor-pointer"
+                >
+                  <option value="upcoming">🗓️ Event Terdekat</option>
+                  <option value="furthest">🗓️ Event Terjauh</option>
+                  <option value="newest">🆕 Baru Dibuat</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Search Input */}
+              <div className="relative w-full sm:w-64">
+                <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Cari event..."
+                  className="w-full pl-9 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all bg-white text-gray-900 text-sm"
+                  value={search}
+                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+                />
+              </div>
+            </div>
           </div>
         </div>
 
